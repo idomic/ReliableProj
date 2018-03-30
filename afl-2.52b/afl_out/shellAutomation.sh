@@ -6,7 +6,7 @@ do
   # take action on each file.
   fname=`basename $file`
   echo "fileName: $fname"
-  ../afl-showmap -o ./bitmaps/$fname -- /home/ubuntu/binafl/binutils-2.30/binutils/objdump -x $file
+  ../afl-showmap -o ./bitmaps/$fname -- /home/ubuntu/binafl/binutils-2.30/binutils/objdump -D $file
   done
 date
 
