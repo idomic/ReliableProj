@@ -9,16 +9,17 @@ import numpy as np
 import glob
 import ipdb
 
-seed_list = glob.glob('/home/dongdong/Project/afl/afl_out/fuzzer01/queue/*')
-bitmap_list = glob.glob('/home/dongdong/Project/afl/afl_out/fuzzer01/bitmap/*')
+seed_list = glob.glob('/home/yuval/Documents/ReliableProj/afl-2.52b/afl_out/fuzzer01/queue/*')
+bitmap_list = glob.glob('/home/yuval/Documents/ReliableProj/afl-2.52b/afl_out/fuzzer01/bitmaps/*')
 seed_list.sort()
 bitmap_list.sort()
 
-#rand_index = np.arange(10778)
-#np.random.shuffle(rand_index)
-with open('rand_index_list', 'rb') as fp:
-    rand_index = pickle.load(fp)
-MAX_FILE_SIZE = 8561
+rand_index = np.arange(len(bitmap_list)-1)#10778)
+print("RAND INDEX HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",rand_index)
+np.random.shuffle(rand_index)
+#with open('rand_index_list', 'rb') as fp:
+#    rand_index = pickle.load(fp)
+MAX_FILE_SIZE = 10000#8561
 MAX_BITMAP_SIZE = 65536
 
 def generate_training_data(lb,ub):
