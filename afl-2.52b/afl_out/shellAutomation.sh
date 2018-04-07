@@ -11,7 +11,8 @@ do
    fname=`basename $file`
    #echo "fileName: $fname"
    ../afl-showmap -q -o ./fuzzer01/bitmaps/$fname -- /home/ubuntu/binafl/binutils-2.30/binutils/objdump -D $file
-    cat ./fuzzer01/bitmaps/$fname | cut -d ':' -f1 > ./fuzzer01/bitmaps/$fname
+   cat ./fuzzer01/bitmaps/$fname | cut -d ':' -f1 > temp
+   cat temp > ./fuzzer01/bitmaps/$fname
 done
 
 for file in ./fuzzer02/queue/id*
@@ -20,7 +21,8 @@ do
    fname=`basename $file`
    #echo "fileName: $fname"
    ../afl-showmap -q -o ./fuzzer02/bitmaps/$fname -- /home/ubuntu/binafl/binutils-2.30/binutils/objdump -D $file
-   cat ./fuzzer02/bitmaps/$fname | cut -d ':' -f1 > ./fuzzer02/bitmaps/$fname
+   cat ./fuzzer02/bitmaps/$fname | cut -d ':' -f1 > temp 
+   cat temp > ./fuzzer02/bitmaps/$fname
 done
 date
 
