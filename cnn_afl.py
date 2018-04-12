@@ -9,17 +9,25 @@ import numpy as np
 import glob
 import ipdb
 
-seed_list = glob.glob('/home/yuval/Documents/ReliableProj/afl-2.52b/afl_out/fuzzer01/queue/*')
-bitmap_list = glob.glob('/home/yuval/Documents/ReliableProj/afl-2.52b/afl_out/fuzzer01/bitmaps/*')
+from ipdb import launch_ipdb_on_exception
+
+
+seed_list = glob.glob('/home/reliableProj/ReliableProj/afl-2.52b/afl_out/fuzzer01/queue/*')
+bitmap_list = glob.glob('/home/reliableProj/ReliableProj/afl-2.52b/afl_out/fuzzer01/bitmaps/*')
+seed_list_test = glob.glob('/home/reliableProj/ReliableProj/afl-2.52b/afl_out/fuzzer02/queue/*')
+bitmap_list_test = glob.glob('/home/reliableProj/ReliableProj/afl-2.52b/afl_out/fuzzer02/bitmaps/*')
 seed_list.sort()
 bitmap_list.sort()
 
-rand_index = np.arange(len(bitmap_list)-1)#10778)
-print("RAND INDEX HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",rand_index)
+rand_index = np.arange(len(seed_list))#10778)
+#print("RAND INDEX HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",rand_index)
 np.random.shuffle(rand_index)
-#with open('rand_index_list', 'rb') as fp:
+
+rand_index_test = np.arange(len(seed_list_test))#10778)
+np.random.shuffle(rand_index_test)
+##with open('rand_index_list', 'rb') as fp:
 #    rand_index = pickle.load(fp)
-MAX_FILE_SIZE = 10000#8561
+MAX_FILE_SIZE = 10561
 MAX_BITMAP_SIZE = 65536
 
 def generate_training_data(lb,ub):
@@ -34,6 +42,23 @@ def generate_training_data(lb,ub):
 
     for i in range(lb,ub):
         tmp = open(bitmap_list[rand_index[i]],'r').read().split('\n')[:-1]
+        tmp = [int(j) for j in tmp]
+        for j in tmp:
+            bitmap[i-lb][j] = 1
+    return seed,bitmap
+
+def generate_testing_data(lb,ub):
+    seed = np.zeros((ub-lb,MAX_FILE_SIZE))
+    bitmap = np.zeros((ub-lb,MAX_BITMAP_SIZE))
+    for i in range(lb,ub):
+        tmp = open(seed_list_test[rand_index_test[i]],'r').read()
+        ln = len(tmp)
+        if ln < MAX_FILE_SIZE:
+            tmp = tmp + (MAX_FILE_SIZE - ln) * '\0'
+        seed[i-lb] = [ord(j) for j in list(tmp)]
+
+    for i in range(lb,ub):
+        tmp = open(bitmap_list_test[rand_index_test[i]],'r').read().split('\n')[:-1]
         tmp = [int(j) for j in tmp]
         for j in tmp:
             bitmap[i-lb][j] = 1
@@ -55,8 +80,12 @@ model.add(Activation('relu'))
 
 #model.add(Conv1D(256, 5, strides=2, padding='valid'))
 #model.add(Activation('relu'))
+
+#removed here
 model.add(Conv1D(128, 7, strides=3))
 model.add(Activation('relu'))
+
+
 #model.add(MaxPooling1D())
 #model.add(Dropout(0.25))
 
@@ -100,11 +129,11 @@ model.compile(loss='mean_squared_error',
 model.summary()
 def train_generate(batch_size):
     while 1:
-        for i in range(0,9701,batch_size):
+        for i in range(0,len(seed_list)-32,batch_size):
             # create numpy arrays of input data
             # and labels, from each line in the file
-            if (i+batch_size) > 9701:
-                x,y=generate_training_data(i,9701)
+            if (i+batch_size) > len(seed_list)-32:
+                x,y=generate_training_data(i,len(seed_list)-32)
                 x = x.reshape((x.shape[0],x.shape[1],1)).astype('float32')/255
                 #x = x_train[i:10000]
                 #y = y_train[i:10000]
@@ -117,16 +146,16 @@ def train_generate(batch_size):
 
 def test_generate(batch_size):
     while 1:
-        for i in range(0,len(seed_list)-9701,batch_size):
+        for i in range(0,len(seed_list_test),batch_size):
             # create numpy arrays of input data
             # and labels, from each line in the file
-            if (i+batch_size) > len(seed_list)-9701:
-                x,y=generate_training_data(i+9701,len(seed_list))
+            if (i+batch_size) > len(seed_list_test):
+                x,y=generate_testing_data(i,len(seed_list_test))
                 x = x.reshape((x.shape[0],x.shape[1],1)).astype('float32')/255
                 #x = x_train[i+10000:]
                 #y = y_train[i+10000:]
             else:
-                x,y=generate_training_data(i+9701,i+batch_size + 9701)
+                x,y=generate_testing_data(i,i+batch_size )#+len(seed_list_test))
                 x = x.reshape((x.shape[0],x.shape[1],1)).astype('float32')/255
                 #x = x_train[i+10000:i+batch_size+10000]
                 #y = y_train[i+10000:i+batch_size+10000]
@@ -135,11 +164,12 @@ def test_generate(batch_size):
 filepath = 'best_weights_new.hdf5'
 callback = keras.callbacks.ModelCheckpoint(filepath, monitor='val_accur', verbose=2, save_best_only=True, save_weights_only=True, mode='max', period=1)
 
-model.fit_generator(train_generate(32),
-          steps_per_epoch = (9701/32 + 1),
-          epochs=100,
-          verbose=2,
-          validation_data=test_generate(64),validation_steps=((len(seed_list)-9701)/64+1),shuffle=True,callbacks=[callback])
+with launch_ipdb_on_exception():
+	model.fit_generator(train_generate(32),
+		steps_per_epoch = (len(seed_list)/32 + 1),
+	        epochs=100,
+          	verbose=2,
+          	validation_data=test_generate(64),validation_steps=((len(seed_list_test))/64+1),shuffle=True,callbacks=[callback])
 # Save model and weights
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
