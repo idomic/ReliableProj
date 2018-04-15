@@ -8,12 +8,12 @@ import os
 import numpy as np
 import glob
 import ipdb
-seed_list = glob.glob('/home/dongdong/Project/objdump/afl_out/seeds/*')
-bitmap_list = glob.glob('/home/dongdong/Project/objdump/afl_out/bitmaps/*')
+seed_list = glob.glob('/home/reliableProj/ReliableProj/afl-2.52b/afl_out/fuzzer01/queue/*')
+bitmap_list = glob.glob('/home/reliableProj/ReliableProj/afl-2.52b/afl_out/fuzzer01/bitmaps/*')
 seed_list.sort()
 bitmap_list.sort()
-test_list = glob.glob('/home/dongdong/Project/objdump/afl_out/test_seeds/*')
-test_bitmap_list = glob.glob('/home/dongdong/Project/objdump/afl_out/test_bitmaps/*')
+test_list = glob.glob('/home/reliableProj/ReliableProj/afl-2.52b/afl_out/fuzzer02/queue/*')
+test_bitmap_list = glob.glob('/home/reliableProj/ReliableProj/afl-2.52b/afl_out/fuzzer02/bitmaps/*')
 test_list.sort()
 test_bitmap_list.sort()
 import random
@@ -48,7 +48,7 @@ def generate_training_data(lb,ub):
         seed[i-lb] = [ord(j) for j in list(tmp)]
 
     for i in range(lb,ub):
-        file_name = "/home/dongdong/Project/objdump/afl_out/convert_bitmaps/" +                     bitmap_list[rand_index[i]].split('/')[-1] + ".npy"
+        file_name = "/home/reliableProj/ReliableProj/afl-2.52b/afl_out/convert_bitmaps/" +                     bitmap_list[rand_index[i]].split('/')[-1] + ".npy"
         bitmap[i-lb] = np.load(file_name)
     return seed,bitmap
 
@@ -63,7 +63,7 @@ def generate_testing_data(lb,ub):
         seed[i-lb] = [ord(j) for j in list(tmp)]
 
     for i in range(lb,ub):
-        file_name = "/home/dongdong/Project/objdump/afl_out/convert_test_bitmaps/" +                     test_list[i].split('/')[-1] + ".npy"
+        file_name = "/home/reliableProj/ReliableProj/afl-2.52b/afl_out/convert_test_bitmaps/" +                     test_list[i].split('/')[-1] + ".npy"
         bitmap[i-lb] = np.load(file_name)
     return seed,bitmap
 
@@ -294,7 +294,7 @@ def gen_mutate1():
                     for grad_idx,val in enumerate(grad_idxx):
                         tmp_str[val] = chr(np.clip(ord(tmp_str[val])+grad[grad_idx],0,255))
                     tmp_str = "".join(tmp_str)
-                    with open("/home/dongdong/Project/objdump/adv_gen_seeds/"+folder_name+"/id:"+str(cnt)+","+str(adv_list[i][1])+"_"+    str(index)+"_"+str(idx)+"_", 'w') as f:
+                    with open("/home/reliableProj/ReliableProj/adv_gen_seeds/"+folder_name+"/id:"+str(cnt)+","+str(adv_list[i][1])+"_"+    str(index)+"_"+str(idx)+"_", 'w') as f:
                         f.write(tmp_str)
                     cnt = cnt + 1
                 for idx in range(255):
@@ -303,7 +303,7 @@ def gen_mutate1():
                     for grad_idx,val in enumerate(grad_idxx):
                         tmp_str[val] = chr(np.clip(ord(tmp_str[val])+grad[grad_idx],0,255))
                     tmp_str = "".join(tmp_str)
-                    with open("/home/dongdong/Project/objdump/adv_gen_seeds/"+folder_name+"/id:"+str(cnt)+","+str(adv_list[i][1])+"_"+    str(index)+"_"+str(idx)+"_", 'w') as f:
+                    with open("/home/reliableProj/ReliableProj/adv_gen_seeds/"+folder_name+"/id:"+str(cnt)+","+str(adv_list[i][1])+"_"+    str(index)+"_"+str(idx)+"_", 'w') as f:
                         f.write(tmp_str)
                     cnt = cnt + 1
         folder_cnt+=1
