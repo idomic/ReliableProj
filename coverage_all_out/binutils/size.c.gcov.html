@@ -1,0 +1,693 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - coverage_all.info - binutils/size.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">binutils</a> - size.c<span style="font-size: 80%;"> (source / <a href="size.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">coverage_all.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">83</td>
+            <td class="headerCovTableEntry">249</td>
+            <td class="headerCovTableEntryLo">33.3 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2018-04-22 05:45:19</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">7</td>
+            <td class="headerCovTableEntry">15</td>
+            <td class="headerCovTableEntryLo">46.7 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /* size.c -- report size of various sections of an executable file.</a>
+<span class="lineNum">       2 </span>            :    Copyright (C) 1991-2018 Free Software Foundation, Inc.
+<span class="lineNum">       3 </span>            : 
+<span class="lineNum">       4 </span>            :    This file is part of GNU Binutils.
+<span class="lineNum">       5 </span>            : 
+<span class="lineNum">       6 </span>            :    This program is free software; you can redistribute it and/or modify
+<span class="lineNum">       7 </span>            :    it under the terms of the GNU General Public License as published by
+<span class="lineNum">       8 </span>            :    the Free Software Foundation; either version 3 of the License, or
+<span class="lineNum">       9 </span>            :    (at your option) any later version.
+<span class="lineNum">      10 </span>            : 
+<span class="lineNum">      11 </span>            :    This program is distributed in the hope that it will be useful,
+<span class="lineNum">      12 </span>            :    but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      13 </span>            :    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      14 </span>            :    GNU General Public License for more details.
+<span class="lineNum">      15 </span>            : 
+<span class="lineNum">      16 </span>            :    You should have received a copy of the GNU General Public License
+<span class="lineNum">      17 </span>            :    along with this program; if not, write to the Free Software
+<span class="lineNum">      18 </span>            :    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
+<span class="lineNum">      19 </span>            :    MA 02110-1301, USA.  */
+<span class="lineNum">      20 </span>            : 
+<span class="lineNum">      21 </span>            : /* Extensions/incompatibilities:
+<span class="lineNum">      22 </span>            :    o - BSD output has filenames at the end.
+<span class="lineNum">      23 </span>            :    o - BSD output can appear in different radicies.
+<span class="lineNum">      24 </span>            :    o - SysV output has less redundant whitespace.  Filename comes at end.
+<span class="lineNum">      25 </span>            :    o - SysV output doesn't show VMA which is always the same as the PMA.
+<span class="lineNum">      26 </span>            :    o - We also handle core files.
+<span class="lineNum">      27 </span>            :    o - We also handle archives.
+<span class="lineNum">      28 </span>            :    If you write shell scripts which manipulate this info then you may be
+<span class="lineNum">      29 </span>            :    out of luck; there's no --compatibility or --pedantic option.  */
+<span class="lineNum">      30 </span>            : 
+<span class="lineNum">      31 </span>            : #include &quot;sysdep.h&quot;
+<span class="lineNum">      32 </span>            : #include &quot;bfd.h&quot;
+<span class="lineNum">      33 </span>            : #include &quot;libiberty.h&quot;
+<span class="lineNum">      34 </span>            : #include &quot;getopt.h&quot;
+<span class="lineNum">      35 </span>            : #include &quot;bucomm.h&quot;
+<span class="lineNum">      36 </span>            : 
+<span class="lineNum">      37 </span>            : #ifndef BSD_DEFAULT
+<span class="lineNum">      38 </span>            : #define BSD_DEFAULT 1
+<span class="lineNum">      39 </span>            : #endif
+<span class="lineNum">      40 </span>            : 
+<span class="lineNum">      41 </span>            : /* Program options.  */
+<span class="lineNum">      42 </span>            : 
+<span class="lineNum">      43 </span>            : static enum
+<span class="lineNum">      44 </span>            :   {
+<span class="lineNum">      45 </span>            :     decimal, octal, hex
+<span class="lineNum">      46 </span>            :   }
+<span class="lineNum">      47 </span>            : radix = decimal;
+<span class="lineNum">      48 </span>            : 
+<span class="lineNum">      49 </span>            : /* 0 means use AT&amp;T-style output.  */
+<span class="lineNum">      50 </span>            : static int berkeley_format = BSD_DEFAULT;
+<span class="lineNum">      51 </span>            : 
+<span class="lineNum">      52 </span>            : static int show_version = 0;
+<span class="lineNum">      53 </span>            : static int show_help = 0;
+<span class="lineNum">      54 </span>            : static int show_totals = 0;
+<span class="lineNum">      55 </span>            : static int show_common = 0;
+<span class="lineNum">      56 </span>            : 
+<span class="lineNum">      57 </span>            : static bfd_size_type common_size;
+<span class="lineNum">      58 </span>            : static bfd_size_type total_bsssize;
+<span class="lineNum">      59 </span>            : static bfd_size_type total_datasize;
+<span class="lineNum">      60 </span>            : static bfd_size_type total_textsize;
+<span class="lineNum">      61 </span>            : 
+<span class="lineNum">      62 </span>            : /* Program exit status.  */
+<span class="lineNum">      63 </span>            : static int return_code = 0;
+<span class="lineNum">      64 </span>            : 
+<span class="lineNum">      65 </span>            : static char *target = NULL;
+<span class="lineNum">      66 </span>            : 
+<span class="lineNum">      67 </span>            : /* Forward declarations.  */
+<span class="lineNum">      68 </span>            : 
+<span class="lineNum">      69 </span>            : static void display_file (char *);
+<span class="lineNum">      70 </span>            : static void rprint_number (int, bfd_size_type);
+<span class="lineNum">      71 </span>            : static void print_sizes (bfd * file);
+<a name="72"><span class="lineNum">      72 </span>            : </a>
+<span class="lineNum">      73 </span>            : static void
+<span class="lineNum">      74 </span><span class="lineNoCov">          0 : usage (FILE *stream, int status)</span>
+<span class="lineNum">      75 </span>            : {
+<span class="lineNum">      76 </span><span class="lineNoCov">          0 :   fprintf (stream, _(&quot;Usage: %s [option(s)] [file(s)]\n&quot;), program_name);</span>
+<span class="lineNum">      77 </span><span class="lineNoCov">          0 :   fprintf (stream, _(&quot; Displays the sizes of sections inside binary files\n&quot;));</span>
+<span class="lineNum">      78 </span><span class="lineNoCov">          0 :   fprintf (stream, _(&quot; If no input file(s) are specified, a.out is assumed\n&quot;));</span>
+<span class="lineNum">      79 </span><span class="lineNoCov">          0 :   fprintf (stream, _(&quot; The options are:\n\</span>
+<span class="lineNum">      80 </span>            :   -A|-B     --format={sysv|berkeley}  Select output style (default is %s)\n\
+<span class="lineNum">      81 </span>            :   -o|-d|-x  --radix={8|10|16}         Display numbers in octal, decimal or hex\n\
+<span class="lineNum">      82 </span>            :   -t        --totals                  Display the total sizes (Berkeley only)\n\
+<span class="lineNum">      83 </span>            :             --common                  Display total size for *COM* syms\n\
+<span class="lineNum">      84 </span>            :             --target=&lt;bfdname&gt;        Set the binary file format\n\
+<span class="lineNum">      85 </span>            :             @&lt;file&gt;                   Read options from &lt;file&gt;\n\
+<span class="lineNum">      86 </span>            :   -h        --help                    Display this information\n\
+<span class="lineNum">      87 </span>            :   -v        --version                 Display the program's version\n\
+<span class="lineNum">      88 </span>            : \n&quot;),
+<span class="lineNum">      89 </span>            : #if BSD_DEFAULT
+<span class="lineNum">      90 </span>            :   &quot;berkeley&quot;
+<span class="lineNum">      91 </span>            : #else
+<span class="lineNum">      92 </span>            :   &quot;sysv&quot;
+<span class="lineNum">      93 </span>            : #endif
+<span class="lineNum">      94 </span>            : );
+<span class="lineNum">      95 </span><span class="lineNoCov">          0 :   list_supported_targets (program_name, stream);</span>
+<span class="lineNum">      96 </span><span class="lineNoCov">          0 :   if (REPORT_BUGS_TO[0] &amp;&amp; status == 0)</span>
+<span class="lineNum">      97 </span><span class="lineNoCov">          0 :     fprintf (stream, _(&quot;Report bugs to %s\n&quot;), REPORT_BUGS_TO);</span>
+<span class="lineNum">      98 </span><span class="lineNoCov">          0 :   exit (status);</span>
+<span class="lineNum">      99 </span>            : }
+<span class="lineNum">     100 </span>            : 
+<span class="lineNum">     101 </span>            : #define OPTION_FORMAT (200)
+<span class="lineNum">     102 </span>            : #define OPTION_RADIX (OPTION_FORMAT + 1)
+<span class="lineNum">     103 </span>            : #define OPTION_TARGET (OPTION_RADIX + 1)
+<span class="lineNum">     104 </span>            : 
+<span class="lineNum">     105 </span>            : static struct option long_options[] =
+<span class="lineNum">     106 </span>            : {
+<span class="lineNum">     107 </span>            :   {&quot;common&quot;, no_argument, &amp;show_common, 1},
+<span class="lineNum">     108 </span>            :   {&quot;format&quot;, required_argument, 0, OPTION_FORMAT},
+<span class="lineNum">     109 </span>            :   {&quot;radix&quot;, required_argument, 0, OPTION_RADIX},
+<span class="lineNum">     110 </span>            :   {&quot;target&quot;, required_argument, 0, OPTION_TARGET},
+<span class="lineNum">     111 </span>            :   {&quot;totals&quot;, no_argument, &amp;show_totals, 1},
+<span class="lineNum">     112 </span>            :   {&quot;version&quot;, no_argument, &amp;show_version, 1},
+<span class="lineNum">     113 </span>            :   {&quot;help&quot;, no_argument, &amp;show_help, 1},
+<span class="lineNum">     114 </span>            :   {0, no_argument, 0, 0}
+<span class="lineNum">     115 </span>            : };
+<span class="lineNum">     116 </span>            : 
+<span class="lineNum">     117 </span>            : int main (int, char **);
+<a name="118"><span class="lineNum">     118 </span>            : </a>
+<span class="lineNum">     119 </span>            : int
+<span class="lineNum">     120 </span><span class="lineCov">    3871879 : main (int argc, char **argv)</span>
+<span class="lineNum">     121 </span>            : {
+<span class="lineNum">     122 </span>            :   int temp;
+<span class="lineNum">     123 </span>            :   int c;
+<span class="lineNum">     124 </span>            : 
+<span class="lineNum">     125 </span>            : #if defined (HAVE_SETLOCALE) &amp;&amp; defined (HAVE_LC_MESSAGES)
+<span class="lineNum">     126 </span><span class="lineCov">    3871879 :   setlocale (LC_MESSAGES, &quot;&quot;);</span>
+<span class="lineNum">     127 </span>            : #endif
+<span class="lineNum">     128 </span>            : #if defined (HAVE_SETLOCALE)
+<span class="lineNum">     129 </span><span class="lineCov">    3871879 :   setlocale (LC_CTYPE, &quot;&quot;);</span>
+<span class="lineNum">     130 </span>            : #endif
+<span class="lineNum">     131 </span><span class="lineCov">    3871879 :   bindtextdomain (PACKAGE, LOCALEDIR);</span>
+<span class="lineNum">     132 </span><span class="lineCov">    3871879 :   textdomain (PACKAGE);</span>
+<span class="lineNum">     133 </span>            : 
+<span class="lineNum">     134 </span><span class="lineCov">    3871879 :   program_name = *argv;</span>
+<span class="lineNum">     135 </span><span class="lineCov">    3871879 :   xmalloc_set_program_name (program_name);</span>
+<span class="lineNum">     136 </span><span class="lineCov">    3871879 :   bfd_set_error_program_name (program_name);</span>
+<span class="lineNum">     137 </span>            : 
+<span class="lineNum">     138 </span><span class="lineCov">    3871879 :   expandargv (&amp;argc, &amp;argv);</span>
+<span class="lineNum">     139 </span>            : 
+<span class="lineNum">     140 </span><span class="lineCov">    3871879 :   bfd_init ();</span>
+<span class="lineNum">     141 </span><span class="lineCov">    3871879 :   set_default_bfd_target ();</span>
+<span class="lineNum">     142 </span>            : 
+<span class="lineNum">     143 </span><span class="lineCov">    7743758 :   while ((c = getopt_long (argc, argv, &quot;ABHhVvdfotx&quot;, long_options,</span>
+<span class="lineNum">     144 </span>            :                            (int *) 0)) != EOF)
+<span class="lineNum">     145 </span><span class="lineNoCov">          0 :     switch (c)</span>
+<span class="lineNum">     146 </span>            :       {
+<span class="lineNum">     147 </span>            :       case OPTION_FORMAT:
+<span class="lineNum">     148 </span><span class="lineNoCov">          0 :         switch (*optarg)</span>
+<span class="lineNum">     149 </span>            :           {
+<span class="lineNum">     150 </span>            :           case 'B':
+<span class="lineNum">     151 </span>            :           case 'b':
+<span class="lineNum">     152 </span><span class="lineNoCov">          0 :             berkeley_format = 1;</span>
+<span class="lineNum">     153 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     154 </span>            :           case 'S':
+<span class="lineNum">     155 </span>            :           case 's':
+<span class="lineNum">     156 </span><span class="lineNoCov">          0 :             berkeley_format = 0;</span>
+<span class="lineNum">     157 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     158 </span>            :           default:
+<span class="lineNum">     159 </span><span class="lineNoCov">          0 :             non_fatal (_(&quot;invalid argument to --format: %s&quot;), optarg);</span>
+<span class="lineNum">     160 </span><span class="lineNoCov">          0 :             usage (stderr, 1);</span>
+<span class="lineNum">     161 </span>            :           }
+<span class="lineNum">     162 </span>            :         break;
+<span class="lineNum">     163 </span>            : 
+<span class="lineNum">     164 </span>            :       case OPTION_TARGET:
+<span class="lineNum">     165 </span><span class="lineNoCov">          0 :         target = optarg;</span>
+<span class="lineNum">     166 </span><span class="lineNoCov">          0 :         break;</span>
+<span class="lineNum">     167 </span>            : 
+<span class="lineNum">     168 </span>            :       case OPTION_RADIX:
+<span class="lineNum">     169 </span>            : #ifdef ANSI_LIBRARIES
+<span class="lineNum">     170 </span>            :         temp = strtol (optarg, NULL, 10);
+<span class="lineNum">     171 </span>            : #else
+<span class="lineNum">     172 </span><span class="lineNoCov">          0 :         temp = atol (optarg);</span>
+<span class="lineNum">     173 </span>            : #endif
+<span class="lineNum">     174 </span><span class="lineNoCov">          0 :         switch (temp)</span>
+<span class="lineNum">     175 </span>            :           {
+<span class="lineNum">     176 </span>            :           case 10:
+<span class="lineNum">     177 </span><span class="lineNoCov">          0 :             radix = decimal;</span>
+<span class="lineNum">     178 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     179 </span>            :           case 8:
+<span class="lineNum">     180 </span><span class="lineNoCov">          0 :             radix = octal;</span>
+<span class="lineNum">     181 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     182 </span>            :           case 16:
+<span class="lineNum">     183 </span><span class="lineNoCov">          0 :             radix = hex;</span>
+<span class="lineNum">     184 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     185 </span>            :           default:
+<span class="lineNum">     186 </span><span class="lineNoCov">          0 :             non_fatal (_(&quot;Invalid radix: %s\n&quot;), optarg);</span>
+<span class="lineNum">     187 </span><span class="lineNoCov">          0 :             usage (stderr, 1);</span>
+<span class="lineNum">     188 </span>            :           }
+<span class="lineNum">     189 </span>            :         break;
+<span class="lineNum">     190 </span>            : 
+<span class="lineNum">     191 </span>            :       case 'A':
+<span class="lineNum">     192 </span><span class="lineNoCov">          0 :         berkeley_format = 0;</span>
+<span class="lineNum">     193 </span><span class="lineNoCov">          0 :         break;</span>
+<span class="lineNum">     194 </span>            :       case 'B':
+<span class="lineNum">     195 </span><span class="lineNoCov">          0 :         berkeley_format = 1;</span>
+<span class="lineNum">     196 </span><span class="lineNoCov">          0 :         break;</span>
+<span class="lineNum">     197 </span>            :       case 'v':
+<span class="lineNum">     198 </span>            :       case 'V':
+<span class="lineNum">     199 </span><span class="lineNoCov">          0 :         show_version = 1;</span>
+<span class="lineNum">     200 </span><span class="lineNoCov">          0 :         break;</span>
+<span class="lineNum">     201 </span>            :       case 'd':
+<span class="lineNum">     202 </span><span class="lineNoCov">          0 :         radix = decimal;</span>
+<span class="lineNum">     203 </span><span class="lineNoCov">          0 :         break;</span>
+<span class="lineNum">     204 </span>            :       case 'x':
+<span class="lineNum">     205 </span><span class="lineNoCov">          0 :         radix = hex;</span>
+<span class="lineNum">     206 </span><span class="lineNoCov">          0 :         break;</span>
+<span class="lineNum">     207 </span>            :       case 'o':
+<span class="lineNum">     208 </span><span class="lineNoCov">          0 :         radix = octal;</span>
+<span class="lineNum">     209 </span><span class="lineNoCov">          0 :         break;</span>
+<span class="lineNum">     210 </span>            :       case 't':
+<span class="lineNum">     211 </span><span class="lineNoCov">          0 :         show_totals = 1;</span>
+<span class="lineNum">     212 </span><span class="lineNoCov">          0 :         break;</span>
+<span class="lineNum">     213 </span>            :       case 'f': /* FIXME : For sysv68, `-f' means `full format', i.e.
+<span class="lineNum">     214 </span>            :                    `[fname:] M(.text) + N(.data) + O(.bss) + P(.comment) = Q'
+<span class="lineNum">     215 </span>            :                    where `fname: ' appears only if there are &gt;= 2 input files,
+<span class="lineNum">     216 </span>            :                    and M, N, O, P, Q are expressed in decimal by default,
+<span class="lineNum">     217 </span>            :                    hexa or octal if requested by `-x' or `-o'.
+<span class="lineNum">     218 </span>            :                    Just to make things interesting, Solaris also accepts -f,
+<span class="lineNum">     219 </span>            :                    which prints out the size of each allocatable section, the
+<span class="lineNum">     220 </span>            :                    name of the section, and the total of the section sizes.  */
+<span class="lineNum">     221 </span>            :                 /* For the moment, accept `-f' silently, and ignore it.  */
+<span class="lineNum">     222 </span>            :         break;
+<span class="lineNum">     223 </span>            :       case 0:
+<span class="lineNum">     224 </span>            :         break;
+<span class="lineNum">     225 </span>            :       case 'h':
+<span class="lineNum">     226 </span>            :       case 'H':
+<span class="lineNum">     227 </span>            :       case '?':
+<span class="lineNum">     228 </span><span class="lineNoCov">          0 :         usage (stderr, 1);</span>
+<span class="lineNum">     229 </span>            :       }
+<span class="lineNum">     230 </span>            : 
+<span class="lineNum">     231 </span><span class="lineCov">    3871879 :   if (show_version)</span>
+<span class="lineNum">     232 </span><span class="lineNoCov">          0 :     print_version (&quot;size&quot;);</span>
+<span class="lineNum">     233 </span><span class="lineCov">    3871879 :   if (show_help)</span>
+<span class="lineNum">     234 </span><span class="lineNoCov">          0 :     usage (stdout, 0);</span>
+<span class="lineNum">     235 </span>            : 
+<span class="lineNum">     236 </span><span class="lineCov">    3871879 :   if (optind == argc)</span>
+<span class="lineNum">     237 </span><span class="lineCov">          1 :     display_file (&quot;a.out&quot;);</span>
+<span class="lineNum">     238 </span>            :   else
+<span class="lineNum">     239 </span><span class="lineCov">    7743756 :     for (; optind &lt; argc;)</span>
+<span class="lineNum">     240 </span><span class="lineCov">    3871878 :       display_file (argv[optind++]);</span>
+<span class="lineNum">     241 </span>            : 
+<span class="lineNum">     242 </span><span class="lineCov">    3871879 :   if (show_totals &amp;&amp; berkeley_format)</span>
+<span class="lineNum">     243 </span>            :     {
+<span class="lineNum">     244 </span><span class="lineNoCov">          0 :       bfd_size_type total = total_textsize + total_datasize + total_bsssize;</span>
+<span class="lineNum">     245 </span>            : 
+<span class="lineNum">     246 </span><span class="lineNoCov">          0 :       rprint_number (7, total_textsize);</span>
+<span class="lineNum">     247 </span><span class="lineNoCov">          0 :       putchar('\t');</span>
+<span class="lineNum">     248 </span><span class="lineNoCov">          0 :       rprint_number (7, total_datasize);</span>
+<span class="lineNum">     249 </span><span class="lineNoCov">          0 :       putchar('\t');</span>
+<span class="lineNum">     250 </span><span class="lineNoCov">          0 :       rprint_number (7, total_bsssize);</span>
+<span class="lineNum">     251 </span><span class="lineNoCov">          0 :       printf (((radix == octal) ? &quot;\t%7lo\t%7lx\t&quot; : &quot;\t%7lu\t%7lx\t&quot;),</span>
+<span class="lineNum">     252 </span>            :               (unsigned long) total, (unsigned long) total);
+<span class="lineNum">     253 </span><span class="lineNoCov">          0 :       fputs (&quot;(TOTALS)\n&quot;, stdout);</span>
+<span class="lineNum">     254 </span>            :     }
+<span class="lineNum">     255 </span>            : 
+<span class="lineNum">     256 </span><span class="lineCov">    3871879 :   return return_code;</span>
+<span class="lineNum">     257 </span>            : }
+<span class="lineNum">     258 </span>            : 
+<span class="lineNum">     259 </span>            : /* Total size required for common symbols in ABFD.  */
+<a name="260"><span class="lineNum">     260 </span>            : </a>
+<span class="lineNum">     261 </span>            : static void
+<span class="lineNum">     262 </span><span class="lineNoCov">          0 : calculate_common_size (bfd *abfd)</span>
+<span class="lineNum">     263 </span>            : {
+<span class="lineNum">     264 </span><span class="lineNoCov">          0 :   asymbol **syms = NULL;</span>
+<span class="lineNum">     265 </span>            :   long storage, symcount;
+<span class="lineNum">     266 </span>            : 
+<span class="lineNum">     267 </span><span class="lineNoCov">          0 :   common_size = 0;</span>
+<span class="lineNum">     268 </span><span class="lineNoCov">          0 :   if ((bfd_get_file_flags (abfd) &amp; (EXEC_P | DYNAMIC | HAS_SYMS)) != HAS_SYMS)</span>
+<span class="lineNum">     269 </span>            :     return;
+<span class="lineNum">     270 </span>            : 
+<span class="lineNum">     271 </span><span class="lineNoCov">          0 :   storage = bfd_get_symtab_upper_bound (abfd);</span>
+<span class="lineNum">     272 </span><span class="lineNoCov">          0 :   if (storage &lt; 0)</span>
+<span class="lineNum">     273 </span><span class="lineNoCov">          0 :     bfd_fatal (bfd_get_filename (abfd));</span>
+<span class="lineNum">     274 </span><span class="lineNoCov">          0 :   if (storage)</span>
+<span class="lineNum">     275 </span><span class="lineNoCov">          0 :     syms = (asymbol **) xmalloc (storage);</span>
+<span class="lineNum">     276 </span>            : 
+<span class="lineNum">     277 </span><span class="lineNoCov">          0 :   symcount = bfd_canonicalize_symtab (abfd, syms);</span>
+<span class="lineNum">     278 </span><span class="lineNoCov">          0 :   if (symcount &lt; 0)</span>
+<span class="lineNum">     279 </span><span class="lineNoCov">          0 :     bfd_fatal (bfd_get_filename (abfd));</span>
+<span class="lineNum">     280 </span>            : 
+<span class="lineNum">     281 </span><span class="lineNoCov">          0 :   while (--symcount &gt;= 0)</span>
+<span class="lineNum">     282 </span>            :     {
+<span class="lineNum">     283 </span><span class="lineNoCov">          0 :       asymbol *sym = syms[symcount];</span>
+<span class="lineNum">     284 </span>            : 
+<span class="lineNum">     285 </span><span class="lineNoCov">          0 :       if (bfd_is_com_section (sym-&gt;section)</span>
+<span class="lineNum">     286 </span><span class="lineNoCov">          0 :           &amp;&amp; (sym-&gt;flags &amp; BSF_SECTION_SYM) == 0)</span>
+<span class="lineNum">     287 </span><span class="lineNoCov">          0 :         common_size += sym-&gt;value;</span>
+<span class="lineNum">     288 </span>            :     }
+<span class="lineNum">     289 </span><span class="lineNoCov">          0 :   free (syms);</span>
+<span class="lineNum">     290 </span>            : }
+<span class="lineNum">     291 </span>            : 
+<span class="lineNum">     292 </span>            : /* Display stats on file or archive member ABFD.  */
+<a name="293"><span class="lineNum">     293 </span>            : </a>
+<span class="lineNum">     294 </span>            : static void
+<span class="lineNum">     295 </span><span class="lineCov">    3871878 : display_bfd (bfd *abfd)</span>
+<span class="lineNum">     296 </span>            : {
+<span class="lineNum">     297 </span>            :   char **matching;
+<span class="lineNum">     298 </span>            : 
+<span class="lineNum">     299 </span><span class="lineCov">    3871878 :   if (bfd_check_format (abfd, bfd_archive))</span>
+<span class="lineNum">     300 </span>            :     /* An archive within an archive.  */
+<span class="lineNum">     301 </span><span class="lineCov">    1937042 :     return;</span>
+<span class="lineNum">     302 </span>            : 
+<span class="lineNum">     303 </span><span class="lineCov">    3871878 :   if (bfd_check_format_matches (abfd, bfd_object, &amp;matching))</span>
+<span class="lineNum">     304 </span>            :     {
+<span class="lineNum">     305 </span><span class="lineCov">    1354268 :       print_sizes (abfd);</span>
+<span class="lineNum">     306 </span>            :       printf (&quot;\n&quot;);
+<span class="lineNum">     307 </span>            :       return;
+<span class="lineNum">     308 </span>            :     }
+<span class="lineNum">     309 </span>            : 
+<span class="lineNum">     310 </span><span class="lineCov">    2517610 :   if (bfd_get_error () == bfd_error_file_ambiguously_recognized)</span>
+<span class="lineNum">     311 </span>            :     {
+<span class="lineNum">     312 </span><span class="lineNoCov">          0 :       bfd_nonfatal (bfd_get_filename (abfd));</span>
+<span class="lineNum">     313 </span><span class="lineNoCov">          0 :       list_matching_formats (matching);</span>
+<span class="lineNum">     314 </span><span class="lineNoCov">          0 :       free (matching);</span>
+<span class="lineNum">     315 </span><span class="lineNoCov">          0 :       return_code = 3;</span>
+<span class="lineNum">     316 </span><span class="lineNoCov">          0 :       return;</span>
+<span class="lineNum">     317 </span>            :     }
+<span class="lineNum">     318 </span>            : 
+<span class="lineNum">     319 </span><span class="lineCov">    2517610 :   if (bfd_check_format_matches (abfd, bfd_core, &amp;matching))</span>
+<span class="lineNum">     320 </span>            :     {
+<span class="lineNum">     321 </span>            :       const char *core_cmd;
+<span class="lineNum">     322 </span>            : 
+<span class="lineNum">     323 </span><span class="lineCov">     582774 :       print_sizes (abfd);</span>
+<span class="lineNum">     324 </span><span class="lineCov">     582774 :       fputs (&quot; (core file&quot;, stdout);</span>
+<span class="lineNum">     325 </span>            : 
+<span class="lineNum">     326 </span><span class="lineCov">     582774 :       core_cmd = bfd_core_file_failing_command (abfd);</span>
+<span class="lineNum">     327 </span><span class="lineCov">     582774 :       if (core_cmd)</span>
+<span class="lineNum">     328 </span>            :         printf (&quot; invoked as %s&quot;, core_cmd);
+<span class="lineNum">     329 </span>            : 
+<span class="lineNum">     330 </span><span class="lineCov">     582774 :       puts (&quot;)\n&quot;);</span>
+<span class="lineNum">     331 </span><span class="lineCov">     582774 :       return;</span>
+<span class="lineNum">     332 </span>            :     }
+<span class="lineNum">     333 </span>            : 
+<span class="lineNum">     334 </span><span class="lineCov">    1934836 :   bfd_nonfatal (bfd_get_filename (abfd));</span>
+<span class="lineNum">     335 </span>            : 
+<span class="lineNum">     336 </span><span class="lineCov">    1934836 :   if (bfd_get_error () == bfd_error_file_ambiguously_recognized)</span>
+<span class="lineNum">     337 </span>            :     {
+<span class="lineNum">     338 </span><span class="lineNoCov">          0 :       list_matching_formats (matching);</span>
+<span class="lineNum">     339 </span><span class="lineNoCov">          0 :       free (matching);</span>
+<span class="lineNum">     340 </span>            :     }
+<span class="lineNum">     341 </span>            : 
+<span class="lineNum">     342 </span><span class="lineCov">    1934836 :   return_code = 3;</span>
+<span class="lineNum">     343 </span>            : }
+<a name="344"><span class="lineNum">     344 </span>            : </a>
+<span class="lineNum">     345 </span>            : static void
+<span class="lineNum">     346 </span><span class="lineNoCov">          0 : display_archive (bfd *file)</span>
+<span class="lineNum">     347 </span>            : {
+<span class="lineNum">     348 </span><span class="lineNoCov">          0 :   bfd *arfile = (bfd *) NULL;</span>
+<span class="lineNum">     349 </span><span class="lineNoCov">          0 :   bfd *last_arfile = (bfd *) NULL;</span>
+<span class="lineNum">     350 </span>            : 
+<span class="lineNum">     351 </span>            :   for (;;)
+<span class="lineNum">     352 </span>            :     {
+<span class="lineNum">     353 </span><span class="lineNoCov">          0 :       bfd_set_error (bfd_error_no_error);</span>
+<span class="lineNum">     354 </span>            : 
+<span class="lineNum">     355 </span><span class="lineNoCov">          0 :       arfile = bfd_openr_next_archived_file (file, arfile);</span>
+<span class="lineNum">     356 </span><span class="lineNoCov">          0 :       if (arfile == NULL)</span>
+<span class="lineNum">     357 </span>            :         {
+<span class="lineNum">     358 </span><span class="lineNoCov">          0 :           if (bfd_get_error () != bfd_error_no_more_archived_files)</span>
+<span class="lineNum">     359 </span>            :             {
+<span class="lineNum">     360 </span><span class="lineNoCov">          0 :               bfd_nonfatal (bfd_get_filename (file));</span>
+<span class="lineNum">     361 </span><span class="lineNoCov">          0 :               return_code = 2;</span>
+<span class="lineNum">     362 </span>            :             }
+<span class="lineNum">     363 </span>            :           break;
+<span class="lineNum">     364 </span>            :         }
+<span class="lineNum">     365 </span>            : 
+<span class="lineNum">     366 </span><span class="lineNoCov">          0 :       display_bfd (arfile);</span>
+<span class="lineNum">     367 </span>            : 
+<span class="lineNum">     368 </span><span class="lineNoCov">          0 :       if (last_arfile != NULL)</span>
+<span class="lineNum">     369 </span>            :         {
+<span class="lineNum">     370 </span><span class="lineNoCov">          0 :           bfd_close (last_arfile);</span>
+<span class="lineNum">     371 </span>            : 
+<span class="lineNum">     372 </span>            :           /* PR 17512: file: a244edbc.  */
+<span class="lineNum">     373 </span><span class="lineNoCov">          0 :           if (last_arfile == arfile)</span>
+<span class="lineNum">     374 </span>            :             return;
+<span class="lineNum">     375 </span>            :         }
+<span class="lineNum">     376 </span>            : 
+<span class="lineNum">     377 </span>            :       last_arfile = arfile;
+<span class="lineNum">     378 </span>            :     }
+<span class="lineNum">     379 </span>            : 
+<span class="lineNum">     380 </span><span class="lineNoCov">          0 :   if (last_arfile != NULL)</span>
+<span class="lineNum">     381 </span><span class="lineNoCov">          0 :     bfd_close (last_arfile);</span>
+<span class="lineNum">     382 </span>            : }
+<a name="383"><span class="lineNum">     383 </span>            : </a>
+<span class="lineNum">     384 </span>            : static void
+<span class="lineNum">     385 </span><span class="lineCov">    3871879 : display_file (char *filename)</span>
+<span class="lineNum">     386 </span>            : {
+<span class="lineNum">     387 </span>            :   bfd *file;
+<span class="lineNum">     388 </span>            : 
+<span class="lineNum">     389 </span><span class="lineCov">    3871879 :   if (get_file_size (filename) &lt; 1)</span>
+<span class="lineNum">     390 </span>            :     {
+<span class="lineNum">     391 </span><span class="lineCov">          1 :       return_code = 1;</span>
+<span class="lineNum">     392 </span><span class="lineCov">          1 :       return;</span>
+<span class="lineNum">     393 </span>            :     }
+<span class="lineNum">     394 </span>            : 
+<span class="lineNum">     395 </span><span class="lineCov">    3871878 :   file = bfd_openr (filename, target);</span>
+<span class="lineNum">     396 </span><span class="lineCov">    3871878 :   if (file == NULL)</span>
+<span class="lineNum">     397 </span>            :     {
+<span class="lineNum">     398 </span><span class="lineNoCov">          0 :       bfd_nonfatal (filename);</span>
+<span class="lineNum">     399 </span><span class="lineNoCov">          0 :       return_code = 1;</span>
+<span class="lineNum">     400 </span><span class="lineNoCov">          0 :       return;</span>
+<span class="lineNum">     401 </span>            :     }
+<span class="lineNum">     402 </span>            : 
+<span class="lineNum">     403 </span><span class="lineCov">    3871878 :   if (bfd_check_format (file, bfd_archive))</span>
+<span class="lineNum">     404 </span><span class="lineNoCov">          0 :     display_archive (file);</span>
+<span class="lineNum">     405 </span>            :   else
+<span class="lineNum">     406 </span><span class="lineCov">    3871878 :     display_bfd (file);</span>
+<span class="lineNum">     407 </span>            : 
+<span class="lineNum">     408 </span><span class="lineCov">    3871878 :   if (!bfd_close (file))</span>
+<span class="lineNum">     409 </span>            :     {
+<span class="lineNum">     410 </span><span class="lineNoCov">          0 :       bfd_nonfatal (filename);</span>
+<span class="lineNum">     411 </span><span class="lineNoCov">          0 :       return_code = 1;</span>
+<span class="lineNum">     412 </span><span class="lineNoCov">          0 :       return;</span>
+<span class="lineNum">     413 </span>            :     }
+<span class="lineNum">     414 </span>            : }
+<a name="415"><span class="lineNum">     415 </span>            : </a>
+<span class="lineNum">     416 </span>            : static int
+<span class="lineNum">     417 </span><span class="lineNoCov">          0 : size_number (bfd_size_type num)</span>
+<span class="lineNum">     418 </span>            : {
+<span class="lineNum">     419 </span>            :   char buffer[40];
+<span class="lineNum">     420 </span>            : 
+<span class="lineNum">     421 </span><span class="lineNoCov">          0 :   sprintf (buffer,</span>
+<span class="lineNum">     422 </span><span class="lineNoCov">          0 :            (radix == decimal ? &quot;%&quot; BFD_VMA_FMT &quot;u&quot; :</span>
+<span class="lineNum">     423 </span>            :            ((radix == octal) ? &quot;0%&quot; BFD_VMA_FMT &quot;o&quot; : &quot;0x%&quot; BFD_VMA_FMT &quot;x&quot;)),
+<span class="lineNum">     424 </span>            :            num);
+<span class="lineNum">     425 </span>            : 
+<span class="lineNum">     426 </span><span class="lineNoCov">          0 :   return strlen (buffer);</span>
+<span class="lineNum">     427 </span>            : }
+<a name="428"><span class="lineNum">     428 </span>            : </a>
+<span class="lineNum">     429 </span>            : static void
+<span class="lineNum">     430 </span><span class="lineCov">    5811126 : rprint_number (int width, bfd_size_type num)</span>
+<span class="lineNum">     431 </span>            : {
+<span class="lineNum">     432 </span>            :   char buffer[40];
+<span class="lineNum">     433 </span>            : 
+<span class="lineNum">     434 </span><span class="lineCov">   11622252 :   sprintf (buffer,</span>
+<span class="lineNum">     435 </span><span class="lineCov">    5811126 :            (radix == decimal ? &quot;%&quot; BFD_VMA_FMT &quot;u&quot; :</span>
+<span class="lineNum">     436 </span>            :            ((radix == octal) ? &quot;0%&quot; BFD_VMA_FMT &quot;o&quot; : &quot;0x%&quot; BFD_VMA_FMT &quot;x&quot;)),
+<span class="lineNum">     437 </span>            :            num);
+<span class="lineNum">     438 </span>            : 
+<span class="lineNum">     439 </span><span class="lineCov">    5811126 :   printf (&quot;%*s&quot;, width, buffer);</span>
+<span class="lineNum">     440 </span><span class="lineCov">    5811126 : }</span>
+<span class="lineNum">     441 </span>            : 
+<span class="lineNum">     442 </span>            : static bfd_size_type bsssize;
+<span class="lineNum">     443 </span>            : static bfd_size_type datasize;
+<span class="lineNum">     444 </span>            : static bfd_size_type textsize;
+<a name="445"><span class="lineNum">     445 </span>            : </a>
+<span class="lineNum">     446 </span>            : static void
+<span class="lineNum">     447 </span><span class="lineCov">   34599076 : berkeley_sum (bfd *abfd ATTRIBUTE_UNUSED, sec_ptr sec,</span>
+<span class="lineNum">     448 </span>            :               void *ignore ATTRIBUTE_UNUSED)
+<span class="lineNum">     449 </span>            : {
+<span class="lineNum">     450 </span>            :   flagword flags;
+<span class="lineNum">     451 </span>            :   bfd_size_type size;
+<span class="lineNum">     452 </span>            : 
+<span class="lineNum">     453 </span><span class="lineCov">   34599076 :   flags = bfd_get_section_flags (abfd, sec);</span>
+<span class="lineNum">     454 </span><span class="lineCov">   34599076 :   if ((flags &amp; SEC_ALLOC) == 0)</span>
+<span class="lineNum">     455 </span>            :     return;
+<span class="lineNum">     456 </span>            : 
+<span class="lineNum">     457 </span><span class="lineCov">   19110393 :   size = bfd_get_section_size (sec);</span>
+<span class="lineNum">     458 </span><span class="lineCov">   19110393 :   if ((flags &amp; SEC_CODE) != 0 || (flags &amp; SEC_READONLY) != 0)</span>
+<span class="lineNum">     459 </span><span class="lineCov">   12671760 :     textsize += size;</span>
+<span class="lineNum">     460 </span><span class="lineCov">    6438633 :   else if ((flags &amp; SEC_HAS_CONTENTS) != 0)</span>
+<span class="lineNum">     461 </span><span class="lineCov">    5202872 :     datasize += size;</span>
+<span class="lineNum">     462 </span>            :   else
+<span class="lineNum">     463 </span><span class="lineCov">    1235761 :     bsssize += size;</span>
+<span class="lineNum">     464 </span>            : }
+<a name="465"><span class="lineNum">     465 </span>            : </a>
+<span class="lineNum">     466 </span>            : static void
+<span class="lineNum">     467 </span><span class="lineCov">    1937042 : print_berkeley_format (bfd *abfd)</span>
+<span class="lineNum">     468 </span>            : {
+<span class="lineNum">     469 </span>            :   static int files_seen = 0;
+<span class="lineNum">     470 </span>            :   bfd_size_type total;
+<span class="lineNum">     471 </span>            : 
+<span class="lineNum">     472 </span><span class="lineCov">    1937042 :   bsssize = 0;</span>
+<span class="lineNum">     473 </span><span class="lineCov">    1937042 :   datasize = 0;</span>
+<span class="lineNum">     474 </span><span class="lineCov">    1937042 :   textsize = 0;</span>
+<span class="lineNum">     475 </span>            : 
+<span class="lineNum">     476 </span><span class="lineCov">    1937042 :   bfd_map_over_sections (abfd, berkeley_sum, NULL);</span>
+<span class="lineNum">     477 </span>            : 
+<span class="lineNum">     478 </span><span class="lineCov">    1937042 :   bsssize += common_size;</span>
+<span class="lineNum">     479 </span><span class="lineCov">    1937042 :   if (files_seen++ == 0)</span>
+<span class="lineNum">     480 </span><span class="lineCov">    1937042 :     puts ((radix == octal) ? &quot;   text\t   data\t    bss\t    oct\t    hex\tfilename&quot; :</span>
+<span class="lineNum">     481 </span>            :           &quot;   text\t   data\t    bss\t    dec\t    hex\tfilename&quot;);
+<span class="lineNum">     482 </span>            : 
+<span class="lineNum">     483 </span><span class="lineCov">    1937042 :   total = textsize + datasize + bsssize;</span>
+<span class="lineNum">     484 </span>            : 
+<span class="lineNum">     485 </span><span class="lineCov">    1937042 :   if (show_totals)</span>
+<span class="lineNum">     486 </span>            :     {
+<span class="lineNum">     487 </span><span class="lineNoCov">          0 :       total_textsize += textsize;</span>
+<span class="lineNum">     488 </span><span class="lineNoCov">          0 :       total_datasize += datasize;</span>
+<span class="lineNum">     489 </span><span class="lineNoCov">          0 :       total_bsssize  += bsssize;</span>
+<span class="lineNum">     490 </span>            :     }
+<span class="lineNum">     491 </span>            : 
+<span class="lineNum">     492 </span><span class="lineCov">    1937042 :   rprint_number (7, textsize);</span>
+<span class="lineNum">     493 </span><span class="lineCov">    1937042 :   putchar ('\t');</span>
+<span class="lineNum">     494 </span><span class="lineCov">    1937042 :   rprint_number (7, datasize);</span>
+<span class="lineNum">     495 </span><span class="lineCov">    1937042 :   putchar ('\t');</span>
+<span class="lineNum">     496 </span><span class="lineCov">    1937042 :   rprint_number (7, bsssize);</span>
+<span class="lineNum">     497 </span><span class="lineCov">    3874084 :   printf (((radix == octal) ? &quot;\t%7lo\t%7lx\t&quot; : &quot;\t%7lu\t%7lx\t&quot;),</span>
+<span class="lineNum">     498 </span>            :           (unsigned long) total, (unsigned long) total);
+<span class="lineNum">     499 </span>            : 
+<span class="lineNum">     500 </span><span class="lineCov">    1937042 :   fputs (bfd_get_filename (abfd), stdout);</span>
+<span class="lineNum">     501 </span>            : 
+<span class="lineNum">     502 </span><span class="lineCov">    1937042 :   if (abfd-&gt;my_archive)</span>
+<span class="lineNum">     503 </span><span class="lineNoCov">          0 :     printf (&quot; (ex %s)&quot;, bfd_get_filename (abfd-&gt;my_archive));</span>
+<span class="lineNum">     504 </span><span class="lineCov">    1937042 : }</span>
+<span class="lineNum">     505 </span>            : 
+<span class="lineNum">     506 </span>            : /* I REALLY miss lexical functions! */
+<span class="lineNum">     507 </span>            : bfd_size_type svi_total = 0;
+<span class="lineNum">     508 </span>            : bfd_vma svi_maxvma = 0;
+<span class="lineNum">     509 </span>            : int svi_namelen = 0;
+<span class="lineNum">     510 </span>            : int svi_vmalen = 0;
+<span class="lineNum">     511 </span>            : int svi_sizelen = 0;
+<a name="512"><span class="lineNum">     512 </span>            : </a>
+<span class="lineNum">     513 </span>            : static void
+<span class="lineNum">     514 </span><span class="lineNoCov">          0 : sysv_internal_sizer (bfd *file ATTRIBUTE_UNUSED, sec_ptr sec,</span>
+<span class="lineNum">     515 </span>            :                      void *ignore ATTRIBUTE_UNUSED)
+<span class="lineNum">     516 </span>            : {
+<span class="lineNum">     517 </span><span class="lineNoCov">          0 :   bfd_size_type size = bfd_section_size (file, sec);</span>
+<span class="lineNum">     518 </span>            : 
+<span class="lineNum">     519 </span><span class="lineNoCov">          0 :   if (   ! bfd_is_abs_section (sec)</span>
+<span class="lineNum">     520 </span><span class="lineNoCov">          0 :       &amp;&amp; ! bfd_is_com_section (sec)</span>
+<span class="lineNum">     521 </span><span class="lineNoCov">          0 :       &amp;&amp; ! bfd_is_und_section (sec))</span>
+<span class="lineNum">     522 </span>            :     {
+<span class="lineNum">     523 </span><span class="lineNoCov">          0 :       int namelen = strlen (bfd_section_name (file, sec));</span>
+<span class="lineNum">     524 </span>            : 
+<span class="lineNum">     525 </span><span class="lineNoCov">          0 :       if (namelen &gt; svi_namelen)</span>
+<span class="lineNum">     526 </span><span class="lineNoCov">          0 :         svi_namelen = namelen;</span>
+<span class="lineNum">     527 </span>            : 
+<span class="lineNum">     528 </span><span class="lineNoCov">          0 :       svi_total += size;</span>
+<span class="lineNum">     529 </span>            : 
+<span class="lineNum">     530 </span><span class="lineNoCov">          0 :       if (bfd_section_vma (file, sec) &gt; svi_maxvma)</span>
+<span class="lineNum">     531 </span><span class="lineNoCov">          0 :         svi_maxvma = bfd_section_vma (file, sec);</span>
+<span class="lineNum">     532 </span>            :     }
+<span class="lineNum">     533 </span><span class="lineNoCov">          0 : }</span>
+<a name="534"><span class="lineNum">     534 </span>            : </a>
+<span class="lineNum">     535 </span>            : static void
+<span class="lineNum">     536 </span><span class="lineNoCov">          0 : sysv_one_line (const char *name, bfd_size_type size, bfd_vma vma)</span>
+<span class="lineNum">     537 </span>            : {
+<span class="lineNum">     538 </span><span class="lineNoCov">          0 :   printf (&quot;%-*s   &quot;, svi_namelen, name);</span>
+<span class="lineNum">     539 </span><span class="lineNoCov">          0 :   rprint_number (svi_sizelen, size);</span>
+<span class="lineNum">     540 </span><span class="lineNoCov">          0 :   printf (&quot;   &quot;);</span>
+<span class="lineNum">     541 </span><span class="lineNoCov">          0 :   rprint_number (svi_vmalen, vma);</span>
+<span class="lineNum">     542 </span><span class="lineNoCov">          0 :   printf (&quot;\n&quot;);</span>
+<span class="lineNum">     543 </span><span class="lineNoCov">          0 : }</span>
+<a name="544"><span class="lineNum">     544 </span>            : </a>
+<span class="lineNum">     545 </span>            : static void
+<span class="lineNum">     546 </span><span class="lineNoCov">          0 : sysv_internal_printer (bfd *file ATTRIBUTE_UNUSED, sec_ptr sec,</span>
+<span class="lineNum">     547 </span>            :                        void *ignore ATTRIBUTE_UNUSED)
+<span class="lineNum">     548 </span>            : {
+<span class="lineNum">     549 </span><span class="lineNoCov">          0 :   bfd_size_type size = bfd_section_size (file, sec);</span>
+<span class="lineNum">     550 </span>            : 
+<span class="lineNum">     551 </span><span class="lineNoCov">          0 :   if (   ! bfd_is_abs_section (sec)</span>
+<span class="lineNum">     552 </span><span class="lineNoCov">          0 :       &amp;&amp; ! bfd_is_com_section (sec)</span>
+<span class="lineNum">     553 </span><span class="lineNoCov">          0 :       &amp;&amp; ! bfd_is_und_section (sec))</span>
+<span class="lineNum">     554 </span>            :     {
+<span class="lineNum">     555 </span><span class="lineNoCov">          0 :       svi_total += size;</span>
+<span class="lineNum">     556 </span>            : 
+<span class="lineNum">     557 </span><span class="lineNoCov">          0 :       sysv_one_line (bfd_section_name (file, sec),</span>
+<span class="lineNum">     558 </span>            :                      size,
+<span class="lineNum">     559 </span>            :                      bfd_section_vma (file, sec));
+<span class="lineNum">     560 </span>            :     }
+<span class="lineNum">     561 </span><span class="lineNoCov">          0 : }</span>
+<a name="562"><span class="lineNum">     562 </span>            : </a>
+<span class="lineNum">     563 </span>            : static void
+<span class="lineNum">     564 </span><span class="lineNoCov">          0 : print_sysv_format (bfd *file)</span>
+<span class="lineNum">     565 </span>            : {
+<span class="lineNum">     566 </span>            :   /* Size all of the columns.  */
+<span class="lineNum">     567 </span><span class="lineNoCov">          0 :   svi_total = 0;</span>
+<span class="lineNum">     568 </span><span class="lineNoCov">          0 :   svi_maxvma = 0;</span>
+<span class="lineNum">     569 </span><span class="lineNoCov">          0 :   svi_namelen = 0;</span>
+<span class="lineNum">     570 </span><span class="lineNoCov">          0 :   bfd_map_over_sections (file, sysv_internal_sizer, NULL);</span>
+<span class="lineNum">     571 </span><span class="lineNoCov">          0 :   if (show_common)</span>
+<span class="lineNum">     572 </span>            :     {
+<span class="lineNum">     573 </span><span class="lineNoCov">          0 :       if (svi_namelen &lt; (int) sizeof (&quot;*COM*&quot;) - 1)</span>
+<span class="lineNum">     574 </span><span class="lineNoCov">          0 :         svi_namelen = sizeof (&quot;*COM*&quot;) - 1;</span>
+<span class="lineNum">     575 </span><span class="lineNoCov">          0 :       svi_total += common_size;</span>
+<span class="lineNum">     576 </span>            :     }
+<span class="lineNum">     577 </span>            : 
+<span class="lineNum">     578 </span><span class="lineNoCov">          0 :   svi_vmalen = size_number ((bfd_size_type)svi_maxvma);</span>
+<span class="lineNum">     579 </span>            : 
+<span class="lineNum">     580 </span><span class="lineNoCov">          0 :   if ((size_t) svi_vmalen &lt; sizeof (&quot;addr&quot;) - 1)</span>
+<span class="lineNum">     581 </span><span class="lineNoCov">          0 :     svi_vmalen = sizeof (&quot;addr&quot;)-1;</span>
+<span class="lineNum">     582 </span>            : 
+<span class="lineNum">     583 </span><span class="lineNoCov">          0 :   svi_sizelen = size_number (svi_total);</span>
+<span class="lineNum">     584 </span><span class="lineNoCov">          0 :   if ((size_t) svi_sizelen &lt; sizeof (&quot;size&quot;) - 1)</span>
+<span class="lineNum">     585 </span><span class="lineNoCov">          0 :     svi_sizelen = sizeof (&quot;size&quot;)-1;</span>
+<span class="lineNum">     586 </span>            : 
+<span class="lineNum">     587 </span><span class="lineNoCov">          0 :   svi_total = 0;</span>
+<span class="lineNum">     588 </span><span class="lineNoCov">          0 :   printf (&quot;%s  &quot;, bfd_get_filename (file));</span>
+<span class="lineNum">     589 </span>            : 
+<span class="lineNum">     590 </span><span class="lineNoCov">          0 :   if (file-&gt;my_archive)</span>
+<span class="lineNum">     591 </span><span class="lineNoCov">          0 :     printf (&quot; (ex %s)&quot;, bfd_get_filename (file-&gt;my_archive));</span>
+<span class="lineNum">     592 </span>            : 
+<span class="lineNum">     593 </span><span class="lineNoCov">          0 :   printf (&quot;:\n%-*s   %*s   %*s\n&quot;, svi_namelen, &quot;section&quot;,</span>
+<span class="lineNum">     594 </span>            :           svi_sizelen, &quot;size&quot;, svi_vmalen, &quot;addr&quot;);
+<span class="lineNum">     595 </span>            : 
+<span class="lineNum">     596 </span><span class="lineNoCov">          0 :   bfd_map_over_sections (file, sysv_internal_printer, NULL);</span>
+<span class="lineNum">     597 </span><span class="lineNoCov">          0 :   if (show_common)</span>
+<span class="lineNum">     598 </span>            :     {
+<span class="lineNum">     599 </span><span class="lineNoCov">          0 :       svi_total += common_size;</span>
+<span class="lineNum">     600 </span><span class="lineNoCov">          0 :       sysv_one_line (&quot;*COM*&quot;, common_size, 0);</span>
+<span class="lineNum">     601 </span>            :     }
+<span class="lineNum">     602 </span>            : 
+<span class="lineNum">     603 </span><span class="lineNoCov">          0 :   printf (&quot;%-*s   &quot;, svi_namelen, &quot;Total&quot;);</span>
+<span class="lineNum">     604 </span><span class="lineNoCov">          0 :   rprint_number (svi_sizelen, svi_total);</span>
+<span class="lineNum">     605 </span><span class="lineNoCov">          0 :   printf (&quot;\n\n&quot;);</span>
+<span class="lineNum">     606 </span><span class="lineNoCov">          0 : }</span>
+<a name="607"><span class="lineNum">     607 </span>            : </a>
+<span class="lineNum">     608 </span>            : static void
+<span class="lineNum">     609 </span><span class="lineCov">    1937042 : print_sizes (bfd *file)</span>
+<span class="lineNum">     610 </span>            : {
+<span class="lineNum">     611 </span><span class="lineCov">    1937042 :   if (show_common)</span>
+<span class="lineNum">     612 </span><span class="lineNoCov">          0 :     calculate_common_size (file);</span>
+<span class="lineNum">     613 </span><span class="lineCov">    1937042 :   if (berkeley_format)</span>
+<span class="lineNum">     614 </span><span class="lineCov">    1937042 :     print_berkeley_format (file);</span>
+<span class="lineNum">     615 </span>            :   else
+<span class="lineNum">     616 </span><span class="lineNoCov">          0 :     print_sysv_format (file);</span>
+<span class="lineNum">     617 </span><span class="lineCov">    1937042 : }</span>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13-14-ga5dd952</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>
