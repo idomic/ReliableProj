@@ -1,0 +1,518 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - app.info - binutils/sysinfo.y</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">binutils</a> - sysinfo.y<span style="font-size: 80%;"> (source / <a href="sysinfo.y.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">app.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">55</td>
+            <td class="headerCovTableEntry">106</td>
+            <td class="headerCovTableEntryLo">51.9 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2018-05-02 17:47:02</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /* Copyright (C) 2001-2018 Free Software Foundation, Inc.</a>
+<span class="lineNum">       2 </span>            :    Written by Steve Chamberlain of Cygnus Support (steve@cygnus.com).
+<span class="lineNum">       3 </span>            : 
+<span class="lineNum">       4 </span>            :    This file is part of GNU binutils.
+<span class="lineNum">       5 </span>            : 
+<span class="lineNum">       6 </span>            :    This program is free software; you can redistribute it and/or modify
+<span class="lineNum">       7 </span>            :    it under the terms of the GNU General Public License as published by
+<span class="lineNum">       8 </span>            :    the Free Software Foundation; either version 3 of the License, or
+<span class="lineNum">       9 </span>            :    (at your option) any later version.
+<span class="lineNum">      10 </span>            : 
+<span class="lineNum">      11 </span>            :    This program is distributed in the hope that it will be useful,
+<span class="lineNum">      12 </span>            :    but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      13 </span>            :    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      14 </span>            :    GNU General Public License for more details.
+<span class="lineNum">      15 </span>            : 
+<span class="lineNum">      16 </span>            :    You should have received a copy of the GNU General Public License
+<span class="lineNum">      17 </span>            :    along with this program; if not, write to the Free Software
+<span class="lineNum">      18 </span>            :    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
+<span class="lineNum">      19 </span>            :    MA 02110-1301, USA.  */
+<span class="lineNum">      20 </span>            : 
+<span class="lineNum">      21 </span>            : %{
+<span class="lineNum">      22 </span>            : #include &lt;stdio.h&gt;
+<span class="lineNum">      23 </span>            : #include &lt;stdlib.h&gt;
+<span class="lineNum">      24 </span>            : #include &lt;string.h&gt;
+<span class="lineNum">      25 </span>            : 
+<span class="lineNum">      26 </span>            : static char writecode;
+<span class="lineNum">      27 </span>            : static char *it;
+<span class="lineNum">      28 </span>            : static int code;
+<span class="lineNum">      29 </span>            : static char * repeat;
+<span class="lineNum">      30 </span>            : static char *oldrepeat;
+<span class="lineNum">      31 </span>            : static char *name;
+<span class="lineNum">      32 </span>            : static int rdepth;
+<span class="lineNum">      33 </span>            : static char *names[] = {&quot; &quot;,&quot;[n]&quot;,&quot;[n][m]&quot;};
+<span class="lineNum">      34 </span>            : static char *pnames[]= {&quot;&quot;,&quot;*&quot;,&quot;**&quot;};
+<span class="lineNum">      35 </span>            : 
+<span class="lineNum">      36 </span>            : static int yyerror (char *s);
+<span class="lineNum">      37 </span>            : extern int yylex (void);
+<span class="lineNum">      38 </span>            : %}
+<span class="lineNum">      39 </span>            : 
+<span class="lineNum">      40 </span>            : 
+<span class="lineNum">      41 </span>            : %union {
+<span class="lineNum">      42 </span>            :  int i;
+<span class="lineNum">      43 </span>            :  char *s;
+<span class="lineNum">      44 </span>            : }
+<span class="lineNum">      45 </span>            : %token COND
+<span class="lineNum">      46 </span>            : %token REPEAT
+<span class="lineNum">      47 </span>            : %token '(' ')'
+<span class="lineNum">      48 </span>            : %token &lt;s&gt; TYPE
+<span class="lineNum">      49 </span>            : %token &lt;s&gt; NAME
+<span class="lineNum">      50 </span>            : %token &lt;i&gt; NUMBER UNIT
+<span class="lineNum">      51 </span>            : %type &lt;i&gt; attr_size
+<span class="lineNum">      52 </span>            : %type &lt;s&gt; attr_desc attr_id attr_type
+<span class="lineNum">      53 </span>            : %%
+<span class="lineNum">      54 </span>            : 
+<span class="lineNum">      55 </span>            : top:  {
+<span class="lineNum">      56 </span><span class="lineCov">          1 :   switch (writecode)</span>
+<span class="lineNum">      57 </span>            :     {
+<span class="lineNum">      58 </span>            :     case 'i':
+<span class="lineNum">      59 </span>            :       printf(&quot;#ifdef SYSROFF_SWAP_IN\n&quot;);
+<span class="lineNum">      60 </span>            :       break;
+<span class="lineNum">      61 </span>            :     case 'p':
+<span class="lineNum">      62 </span>            :       printf(&quot;#ifdef SYSROFF_p\n&quot;);
+<span class="lineNum">      63 </span>            :       break;
+<span class="lineNum">      64 </span>            :     case 'd':
+<span class="lineNum">      65 </span>            :       break;
+<span class="lineNum">      66 </span>            :     case 'g':
+<span class="lineNum">      67 </span>            :       printf(&quot;#ifdef SYSROFF_SWAP_OUT\n&quot;);
+<span class="lineNum">      68 </span>            :       break;
+<span class="lineNum">      69 </span>            :     case 'c':
+<span class="lineNum">      70 </span><span class="lineNoCov">          0 :       printf(&quot;#ifdef SYSROFF_PRINT\n&quot;);</span>
+<span class="lineNum">      71 </span><span class="lineNoCov">          0 :       printf(&quot;#include &lt;stdio.h&gt;\n&quot;);</span>
+<span class="lineNum">      72 </span><span class="lineNoCov">          0 :       printf(&quot;#include &lt;stdlib.h&gt;\n&quot;);</span>
+<span class="lineNum">      73 </span>            :       printf(&quot;#include &lt;ansidecl.h&gt;\n&quot;);
+<span class="lineNum">      74 </span>            :       break;
+<span class="lineNum">      75 </span>            :     }
+<span class="lineNum">      76 </span>            :  }
+<span class="lineNum">      77 </span>            : it_list {
+<span class="lineNum">      78 </span><span class="lineCov">          1 :   switch (writecode) {</span>
+<span class="lineNum">      79 </span>            :   case 'i':
+<span class="lineNum">      80 </span>            :   case 'p':
+<span class="lineNum">      81 </span>            :   case 'g':
+<span class="lineNum">      82 </span>            :   case 'c':
+<span class="lineNum">      83 </span>            :     printf(&quot;#endif\n&quot;);
+<span class="lineNum">      84 </span>            :     break;
+<span class="lineNum">      85 </span>            :   case 'd':
+<span class="lineNum">      86 </span>            :     break;
+<span class="lineNum">      87 </span>            :   }
+<span class="lineNum">      88 </span>            : }
+<span class="lineNum">      89 </span>            : 
+<span class="lineNum">      90 </span>            :   ;
+<span class="lineNum">      91 </span>            : 
+<span class="lineNum">      92 </span>            : 
+<span class="lineNum">      93 </span>            : it_list: it it_list
+<span class="lineNum">      94 </span>            :   |
+<span class="lineNum">      95 </span>            :   ;
+<span class="lineNum">      96 </span>            : 
+<span class="lineNum">      97 </span>            : it:
+<span class="lineNum">      98 </span>            :         '(' NAME NUMBER
+<span class="lineNum">      99 </span>            :       {
+<span class="lineNum">     100 </span><span class="lineCov">         31 :         it = $2; code = $3;</span>
+<span class="lineNum">     101 </span><span class="lineCov">         31 :         switch (writecode)</span>
+<span class="lineNum">     102 </span>            :           {
+<span class="lineNum">     103 </span>            :           case 'd':
+<span class="lineNum">     104 </span><span class="lineCov">         62 :             printf(&quot;\n\n\n#define IT_%s_CODE 0x%x\n&quot;, it,code);</span>
+<span class="lineNum">     105 </span><span class="lineCov">         62 :             printf(&quot;struct IT_%s;\n&quot;, it);</span>
+<span class="lineNum">     106 </span><span class="lineCov">         62 :             printf(&quot;extern void sysroff_swap_%s_in (struct IT_%s *);\n&quot;,</span>
+<span class="lineNum">     107 </span>            :                    $2, it);
+<span class="lineNum">     108 </span><span class="lineCov">         62 :             printf(&quot;extern void sysroff_swap_%s_out (FILE *, struct IT_%s *);\n&quot;,</span>
+<span class="lineNum">     109 </span>            :                    $2, it);
+<span class="lineNum">     110 </span><span class="lineCov">         62 :             printf(&quot;extern void sysroff_print_%s_out (struct IT_%s *);\n&quot;,</span>
+<span class="lineNum">     111 </span>            :                    $2, it);
+<span class="lineNum">     112 </span><span class="lineCov">         31 :             printf(&quot;struct IT_%s { \n&quot;, it);</span>
+<span class="lineNum">     113 </span>            :             break;
+<span class="lineNum">     114 </span>            :           case 'i':
+<span class="lineNum">     115 </span><span class="lineNoCov">          0 :             printf(&quot;void sysroff_swap_%s_in (struct IT_%s * ptr)\n&quot;,$2,it);</span>
+<span class="lineNum">     116 </span><span class="lineNoCov">          0 :             printf(&quot;{\n&quot;);</span>
+<span class="lineNum">     117 </span><span class="lineNoCov">          0 :             printf(&quot;\tunsigned char raw[255];\n&quot;);</span>
+<span class="lineNum">     118 </span><span class="lineNoCov">          0 :             printf(&quot;\tint idx = 0;\n&quot;);</span>
+<span class="lineNum">     119 </span><span class="lineNoCov">          0 :             printf(&quot;\tint size;\n&quot;);</span>
+<span class="lineNum">     120 </span><span class="lineNoCov">          0 :             printf(&quot;\tmemset(raw,0,255);\n&quot;);</span>
+<span class="lineNum">     121 </span><span class="lineNoCov">          0 :             printf(&quot;\tmemset(ptr,0,sizeof(*ptr));\n&quot;);</span>
+<span class="lineNum">     122 </span>            :             printf(&quot;\tsize = fillup(raw);\n&quot;);
+<span class="lineNum">     123 </span>            :             break;
+<span class="lineNum">     124 </span>            :           case 'g':
+<span class="lineNum">     125 </span><span class="lineNoCov">          0 :             printf(&quot;void sysroff_swap_%s_out (FILE * ffile, struct IT_%s * ptr)\n&quot;,$2,it);</span>
+<span class="lineNum">     126 </span><span class="lineNoCov">          0 :             printf(&quot;{\n&quot;);</span>
+<span class="lineNum">     127 </span><span class="lineNoCov">          0 :             printf(&quot;\tunsigned char raw[255];\n&quot;);</span>
+<span class="lineNum">     128 </span><span class="lineNoCov">          0 :             printf(&quot;\tint idx = 16;\n&quot;);</span>
+<span class="lineNum">     129 </span><span class="lineNoCov">          0 :             printf(&quot;\tmemset (raw, 0, 255);\n&quot;);</span>
+<span class="lineNum">     130 </span><span class="lineNoCov">          0 :             printf(&quot;\tcode = IT_%s_CODE;\n&quot;, it);</span>
+<span class="lineNum">     131 </span>            :             break;
+<span class="lineNum">     132 </span>            :           case 'o':
+<span class="lineNum">     133 </span><span class="lineNoCov">          0 :             printf(&quot;void sysroff_swap_%s_out (bfd * abfd, struct IT_%s * ptr)\n&quot;,$2, it);</span>
+<span class="lineNum">     134 </span><span class="lineNoCov">          0 :             printf(&quot;{\n&quot;);</span>
+<span class="lineNum">     135 </span>            :             printf(&quot;\tint idx = 0;\n&quot;);
+<span class="lineNum">     136 </span>            :             break;
+<span class="lineNum">     137 </span>            :           case 'c':
+<span class="lineNum">     138 </span><span class="lineNoCov">          0 :             printf(&quot;void sysroff_print_%s_out (struct IT_%s *ptr)\n&quot;,$2,it);</span>
+<span class="lineNum">     139 </span><span class="lineNoCov">          0 :             printf(&quot;{\n&quot;);</span>
+<span class="lineNum">     140 </span><span class="lineNoCov">          0 :             printf(&quot;itheader(\&quot;%s\&quot;, IT_%s_CODE);\n&quot;,$2,$2);</span>
+<span class="lineNum">     141 </span>            :             break;
+<span class="lineNum">     142 </span>            : 
+<span class="lineNum">     143 </span>            :           case 't':
+<span class="lineNum">     144 </span>            :             break;
+<span class="lineNum">     145 </span>            :           }
+<span class="lineNum">     146 </span>            : 
+<span class="lineNum">     147 </span>            :       }
+<span class="lineNum">     148 </span>            :         it_field_list
+<span class="lineNum">     149 </span>            : ')'
+<span class="lineNum">     150 </span>            : {
+<span class="lineNum">     151 </span><span class="lineCov">         31 :   switch (writecode) {</span>
+<span class="lineNum">     152 </span>            :   case 'd':
+<span class="lineNum">     153 </span>            :     printf(&quot;};\n&quot;);
+<span class="lineNum">     154 </span>            :     break;
+<span class="lineNum">     155 </span>            :   case 'g':
+<span class="lineNum">     156 </span><span class="lineNoCov">          0 :     printf(&quot;\tchecksum(ffile,raw, idx, IT_%s_CODE);\n&quot;, it);</span>
+<span class="lineNum">     157 </span>            :     /* Fall through.  */
+<span class="lineNum">     158 </span>            :   case 'i':
+<span class="lineNum">     159 </span>            :   case 'o':
+<span class="lineNum">     160 </span>            :   case 'c':
+<span class="lineNum">     161 </span>            :     printf(&quot;}\n&quot;);
+<span class="lineNum">     162 </span>            :   }
+<span class="lineNum">     163 </span>            : 
+<span class="lineNum">     164 </span><span class="lineCov">         31 :   free (it);</span>
+<span class="lineNum">     165 </span>            : }
+<span class="lineNum">     166 </span>            : ;
+<span class="lineNum">     167 </span>            : 
+<span class="lineNum">     168 </span>            : 
+<span class="lineNum">     169 </span>            : 
+<span class="lineNum">     170 </span>            : it_field_list:
+<span class="lineNum">     171 </span>            :                 it_field it_field_list
+<span class="lineNum">     172 </span>            :         |       cond_it_field it_field_list
+<span class="lineNum">     173 </span>            :         |       repeat_it_field it_field_list
+<span class="lineNum">     174 </span>            :         |
+<span class="lineNum">     175 </span>            :         ;
+<span class="lineNum">     176 </span>            : 
+<span class="lineNum">     177 </span>            : repeat_it_field: '(' REPEAT NAME
+<span class="lineNum">     178 </span>            :         {
+<span class="lineNum">     179 </span><span class="lineCov">          8 :           rdepth++;</span>
+<span class="lineNum">     180 </span><span class="lineCov">          8 :           switch (writecode)</span>
+<span class="lineNum">     181 </span>            :             {
+<span class="lineNum">     182 </span>            :             case 'c':
+<span class="lineNum">     183 </span><span class="lineNoCov">          0 :               if (rdepth==1)</span>
+<span class="lineNum">     184 </span><span class="lineNoCov">          0 :               printf(&quot;\tprintf(\&quot;repeat %%d\\n\&quot;, %s);\n&quot;,$3);</span>
+<span class="lineNum">     185 </span><span class="lineNoCov">          0 :               if (rdepth==2)</span>
+<span class="lineNum">     186 </span><span class="lineNoCov">          0 :               printf(&quot;\tprintf(\&quot;repeat %%d\\n\&quot;, %s[n]);\n&quot;,$3);</span>
+<span class="lineNum">     187 </span>            :               /* Fall through.  */
+<span class="lineNum">     188 </span>            :             case 'i':
+<span class="lineNum">     189 </span>            :             case 'g':
+<span class="lineNum">     190 </span>            :             case 'o':
+<span class="lineNum">     191 </span>            : 
+<span class="lineNum">     192 </span><span class="lineNoCov">          0 :               if (rdepth==1)</span>
+<span class="lineNum">     193 </span>            :                 {
+<span class="lineNum">     194 </span><span class="lineNoCov">          0 :               printf(&quot;\t{ int n; for (n = 0; n &lt; %s; n++) {\n&quot;,    $3);</span>
+<span class="lineNum">     195 </span>            :             }
+<span class="lineNum">     196 </span><span class="lineNoCov">          0 :               if (rdepth == 2) {</span>
+<span class="lineNum">     197 </span><span class="lineNoCov">          0 :               printf(&quot;\t{ int m; for (m = 0; m &lt; %s[n]; m++) {\n&quot;,    $3);</span>
+<span class="lineNum">     198 </span>            :             }
+<span class="lineNum">     199 </span>            : 
+<span class="lineNum">     200 </span>            :               break;
+<span class="lineNum">     201 </span>            :             }
+<span class="lineNum">     202 </span>            : 
+<span class="lineNum">     203 </span><span class="lineCov">          8 :           oldrepeat = repeat;</span>
+<span class="lineNum">     204 </span><span class="lineCov">          8 :          repeat = $3;</span>
+<span class="lineNum">     205 </span>            :         }
+<span class="lineNum">     206 </span>            : 
+<span class="lineNum">     207 </span>            :          it_field_list ')'
+<span class="lineNum">     208 </span>            : 
+<span class="lineNum">     209 </span>            :         {
+<span class="lineNum">     210 </span><span class="lineCov">          8 :           free (repeat);</span>
+<span class="lineNum">     211 </span>            : 
+<span class="lineNum">     212 </span><span class="lineCov">          8 :           repeat = oldrepeat;</span>
+<span class="lineNum">     213 </span><span class="lineCov">          8 :           oldrepeat =0;</span>
+<span class="lineNum">     214 </span><span class="lineCov">          8 :           rdepth--;</span>
+<span class="lineNum">     215 </span><span class="lineCov">          8 :           switch (writecode)</span>
+<span class="lineNum">     216 </span>            :             {
+<span class="lineNum">     217 </span>            :             case 'i':
+<span class="lineNum">     218 </span>            :             case 'g':
+<span class="lineNum">     219 </span>            :             case 'o':
+<span class="lineNum">     220 </span>            :             case 'c':
+<span class="lineNum">     221 </span>            :           printf(&quot;\t}}\n&quot;);
+<span class="lineNum">     222 </span>            :         }
+<span class="lineNum">     223 </span>            :         }
+<span class="lineNum">     224 </span>            :        ;
+<span class="lineNum">     225 </span>            : 
+<span class="lineNum">     226 </span>            : 
+<span class="lineNum">     227 </span>            : cond_it_field: '(' COND NAME
+<span class="lineNum">     228 </span>            :         {
+<span class="lineNum">     229 </span><span class="lineCov">         38 :           switch (writecode)</span>
+<span class="lineNum">     230 </span>            :             {
+<span class="lineNum">     231 </span>            :             case 'i':
+<span class="lineNum">     232 </span>            :             case 'g':
+<span class="lineNum">     233 </span>            :             case 'o':
+<span class="lineNum">     234 </span>            :             case 'c':
+<span class="lineNum">     235 </span><span class="lineNoCov">          0 :               printf(&quot;\tif (%s) {\n&quot;, $3);</span>
+<span class="lineNum">     236 </span>            :               break;
+<span class="lineNum">     237 </span>            :             }
+<span class="lineNum">     238 </span>            : 
+<span class="lineNum">     239 </span><span class="lineCov">         38 :           free ($3);</span>
+<span class="lineNum">     240 </span>            :         }
+<span class="lineNum">     241 </span>            : 
+<span class="lineNum">     242 </span>            :          it_field_list ')'
+<span class="lineNum">     243 </span>            :         {
+<span class="lineNum">     244 </span><span class="lineCov">         38 :           switch (writecode)</span>
+<span class="lineNum">     245 </span>            :             {
+<span class="lineNum">     246 </span>            :             case 'i':
+<span class="lineNum">     247 </span>            :             case 'g':
+<span class="lineNum">     248 </span>            :             case 'o':
+<span class="lineNum">     249 </span>            :             case 'c':
+<span class="lineNum">     250 </span>            :           printf(&quot;\t}\n&quot;);
+<span class="lineNum">     251 </span>            :         }
+<span class="lineNum">     252 </span>            :         }
+<span class="lineNum">     253 </span>            :        ;
+<span class="lineNum">     254 </span>            : 
+<span class="lineNum">     255 </span>            : it_field:
+<span class="lineNum">     256 </span>            :         '(' attr_desc '(' attr_type attr_size ')' attr_id
+<span class="lineNum">     257 </span><span class="lineCov">        255 :         {name = $7; }</span>
+<span class="lineNum">     258 </span>            :         enums ')'
+<span class="lineNum">     259 </span>            :         {
+<span class="lineNum">     260 </span><span class="lineCov">        255 :           char *desc = $2;</span>
+<span class="lineNum">     261 </span><span class="lineCov">        255 :           char *type = $4;</span>
+<span class="lineNum">     262 </span><span class="lineCov">        255 :           int size = $5;</span>
+<span class="lineNum">     263 </span><span class="lineCov">        255 :           char *id = $7;</span>
+<span class="lineNum">     264 </span><span class="lineCov">        255 : char *p = names[rdepth];</span>
+<span class="lineNum">     265 </span><span class="lineCov">        255 : char *ptr = pnames[rdepth];</span>
+<span class="lineNum">     266 </span><span class="lineCov">        255 :           switch (writecode)</span>
+<span class="lineNum">     267 </span>            :             {
+<span class="lineNum">     268 </span>            :             case 'g':
+<span class="lineNum">     269 </span><span class="lineNoCov">          0 :               if (size % 8)</span>
+<span class="lineNum">     270 </span>            :                 {
+<span class="lineNum">     271 </span>            : 
+<span class="lineNum">     272 </span><span class="lineNoCov">          0 :                   printf(&quot;\twriteBITS(ptr-&gt;%s%s,raw,&amp;idx,%d);\n&quot;,</span>
+<span class="lineNum">     273 </span>            :                          id,
+<span class="lineNum">     274 </span>            :                          names[rdepth], size);
+<span class="lineNum">     275 </span>            : 
+<span class="lineNum">     276 </span>            :                 }
+<span class="lineNum">     277 </span>            :               else {
+<span class="lineNum">     278 </span><span class="lineNoCov">          0 :                 printf(&quot;\twrite%s(ptr-&gt;%s%s,raw,&amp;idx,%d,ffile);\n&quot;,</span>
+<span class="lineNum">     279 </span>            :                        type,
+<span class="lineNum">     280 </span>            :                        id,
+<span class="lineNum">     281 </span>            :                        names[rdepth],size/8);
+<span class="lineNum">     282 </span>            :                 }
+<span class="lineNum">     283 </span>            :               break;
+<span class="lineNum">     284 </span>            :             case 'i':
+<span class="lineNum">     285 </span>            :               {
+<span class="lineNum">     286 </span>            : 
+<span class="lineNum">     287 </span><span class="lineNoCov">          0 :                 if (rdepth &gt;= 1)</span>
+<span class="lineNum">     288 </span>            : 
+<span class="lineNum">     289 </span>            :                   {
+<span class="lineNum">     290 </span><span class="lineNoCov">          0 :                     printf(&quot;if (!ptr-&gt;%s) ptr-&gt;%s = (%s*)xcalloc(%s, sizeof(ptr-&gt;%s[0]));\n&quot;,</span>
+<span class="lineNum">     291 </span>            :                            id,
+<span class="lineNum">     292 </span>            :                            id,
+<span class="lineNum">     293 </span>            :                            type,
+<span class="lineNum">     294 </span>            :                            repeat,
+<span class="lineNum">     295 </span>            :                            id);
+<span class="lineNum">     296 </span>            :                   }
+<span class="lineNum">     297 </span>            : 
+<span class="lineNum">     298 </span><span class="lineNoCov">          0 :                 if (rdepth == 2)</span>
+<span class="lineNum">     299 </span>            :                   {
+<span class="lineNum">     300 </span><span class="lineNoCov">          0 :                     printf(&quot;if (!ptr-&gt;%s[n]) ptr-&gt;%s[n] = (%s**)xcalloc(%s[n], sizeof(ptr-&gt;%s[n][0]));\n&quot;,</span>
+<span class="lineNum">     301 </span>            :                            id,
+<span class="lineNum">     302 </span>            :                            id,
+<span class="lineNum">     303 </span>            :                            type,
+<span class="lineNum">     304 </span>            :                            repeat,
+<span class="lineNum">     305 </span>            :                            id);
+<span class="lineNum">     306 </span>            :                   }
+<span class="lineNum">     307 </span>            : 
+<span class="lineNum">     308 </span>            :               }
+<span class="lineNum">     309 </span>            : 
+<span class="lineNum">     310 </span><span class="lineNoCov">          0 :               if (size % 8)</span>
+<span class="lineNum">     311 </span>            :                 {
+<span class="lineNum">     312 </span><span class="lineNoCov">          0 :                   printf(&quot;\tptr-&gt;%s%s = getBITS(raw,&amp;idx, %d,size);\n&quot;,</span>
+<span class="lineNum">     313 </span>            :                          id,
+<span class="lineNum">     314 </span>            :                          names[rdepth],
+<span class="lineNum">     315 </span>            :                          size);
+<span class="lineNum">     316 </span>            :                 }
+<span class="lineNum">     317 </span>            :               else {
+<span class="lineNum">     318 </span><span class="lineNoCov">          0 :                 printf(&quot;\tptr-&gt;%s%s = get%s(raw,&amp;idx, %d,size);\n&quot;,</span>
+<span class="lineNum">     319 </span>            :                        id,
+<span class="lineNum">     320 </span>            :                        names[rdepth],
+<span class="lineNum">     321 </span>            :                        type,
+<span class="lineNum">     322 </span>            :                        size/8);
+<span class="lineNum">     323 </span>            :                 }
+<span class="lineNum">     324 </span>            :               break;
+<span class="lineNum">     325 </span>            :             case 'o':
+<span class="lineNum">     326 </span><span class="lineNoCov">          0 :               printf(&quot;\tput%s(raw,%d,%d,&amp;idx,ptr-&gt;%s%s);\n&quot;, type,size/8,size%8,id,names[rdepth]);</span>
+<span class="lineNum">     327 </span>            :               break;
+<span class="lineNum">     328 </span>            :             case 'd':
+<span class="lineNum">     329 </span><span class="lineCov">        255 :               if (repeat)</span>
+<span class="lineNum">     330 </span><span class="lineCov">         31 :                 printf(&quot;\t/* repeat %s */\n&quot;, repeat);</span>
+<span class="lineNum">     331 </span>            : 
+<span class="lineNum">     332 </span><span class="lineCov">        255 :                   if (type[0] == 'I') {</span>
+<span class="lineNum">     333 </span>            :                   printf(&quot;\tint %s%s; \t/* %s */\n&quot;,ptr,id, desc);
+<span class="lineNum">     334 </span>            :                 }
+<span class="lineNum">     335 </span><span class="lineCov">         30 :                   else if (type[0] =='C') {</span>
+<span class="lineNum">     336 </span>            :                   printf(&quot;\tchar %s*%s;\t /* %s */\n&quot;,ptr,id, desc);
+<span class="lineNum">     337 </span>            :                 }
+<span class="lineNum">     338 </span>            :               else {
+<span class="lineNum">     339 </span>            :                 printf(&quot;\tbarray %s%s;\t /* %s */\n&quot;,ptr,id, desc);
+<span class="lineNum">     340 </span>            :               }
+<span class="lineNum">     341 </span>            :                   break;
+<span class="lineNum">     342 </span>            :                 case 'c':
+<span class="lineNum">     343 </span><span class="lineNoCov">          0 :               printf(&quot;tabout();\n&quot;);</span>
+<span class="lineNum">     344 </span><span class="lineNoCov">          0 :                   printf(&quot;\tprintf(\&quot;/*%-30s*/ ptr-&gt;%s = \&quot;);\n&quot;, desc, id);</span>
+<span class="lineNum">     345 </span>            : 
+<span class="lineNum">     346 </span><span class="lineNoCov">          0 :                   if (type[0] == 'I')</span>
+<span class="lineNum">     347 </span>            :                   printf(&quot;\tprintf(\&quot;%%d\\n\&quot;,ptr-&gt;%s%s);\n&quot;, id,p);
+<span class="lineNum">     348 </span><span class="lineNoCov">          0 :                   else   if (type[0] == 'C')</span>
+<span class="lineNum">     349 </span>            :                   printf(&quot;\tprintf(\&quot;%%s\\n\&quot;,ptr-&gt;%s%s);\n&quot;, id,p);
+<span class="lineNum">     350 </span>            : 
+<span class="lineNum">     351 </span><span class="lineNoCov">          0 :                   else   if (type[0] == 'B')</span>
+<span class="lineNum">     352 </span>            :                     {
+<span class="lineNum">     353 </span>            :                   printf(&quot;\tpbarray(&amp;ptr-&gt;%s%s);\n&quot;, id,p);
+<span class="lineNum">     354 </span>            :                 }
+<span class="lineNum">     355 </span><span class="lineNoCov">          0 :               else abort();</span>
+<span class="lineNum">     356 </span>            :                   break;
+<span class="lineNum">     357 </span>            :                 }
+<span class="lineNum">     358 </span>            : 
+<span class="lineNum">     359 </span><span class="lineCov">        255 :           free (desc);</span>
+<span class="lineNum">     360 </span><span class="lineCov">        255 :           free (id);</span>
+<span class="lineNum">     361 </span>            :         }
+<span class="lineNum">     362 </span>            : 
+<span class="lineNum">     363 </span>            :         ;
+<span class="lineNum">     364 </span>            : 
+<span class="lineNum">     365 </span>            : 
+<span class="lineNum">     366 </span>            : attr_type:
+<span class="lineNum">     367 </span><span class="lineCov">         30 :          TYPE { $$ = $1; }</span>
+<span class="lineNum">     368 </span><span class="lineCov">        225 :         |  { $$ = &quot;INT&quot;;}</span>
+<span class="lineNum">     369 </span>            :         ;
+<span class="lineNum">     370 </span>            : 
+<span class="lineNum">     371 </span>            : attr_desc:
+<span class="lineNum">     372 </span>            :         '(' NAME ')'
+<span class="lineNum">     373 </span><span class="lineCov">        255 :         { $$ = $2; }</span>
+<span class="lineNum">     374 </span>            :         ;
+<span class="lineNum">     375 </span>            : 
+<span class="lineNum">     376 </span>            : attr_size:
+<span class="lineNum">     377 </span>            :          NUMBER UNIT
+<span class="lineNum">     378 </span><span class="lineCov">        255 :         { $$ = $1 * $2; }</span>
+<span class="lineNum">     379 </span>            :         ;
+<span class="lineNum">     380 </span>            : 
+<span class="lineNum">     381 </span>            : 
+<span class="lineNum">     382 </span>            : attr_id:
+<span class="lineNum">     383 </span><span class="lineCov">        255 :                 '(' NAME ')'    { $$ = $2; }</span>
+<span class="lineNum">     384 </span><span class="lineNoCov">          0 :         |       { $$ = strdup (&quot;dummy&quot;);}</span>
+<span class="lineNum">     385 </span>            :         ;
+<span class="lineNum">     386 </span>            : 
+<span class="lineNum">     387 </span>            : enums:
+<span class="lineNum">     388 </span>            :         | '(' enum_list ')' ;
+<span class="lineNum">     389 </span>            : 
+<span class="lineNum">     390 </span>            : enum_list:
+<span class="lineNum">     391 </span>            :         |
+<span class="lineNum">     392 </span>            :         enum_list '(' NAME NAME ')' {
+<span class="lineNum">     393 </span><span class="lineCov">         85 :           switch (writecode)</span>
+<span class="lineNum">     394 </span>            :             {
+<span class="lineNum">     395 </span>            :             case 'd':
+<span class="lineNum">     396 </span><span class="lineCov">         85 :               printf(&quot;#define %s %s\n&quot;, $3,$4);</span>
+<span class="lineNum">     397 </span>            :               break;
+<span class="lineNum">     398 </span>            :             case 'c':
+<span class="lineNum">     399 </span><span class="lineNoCov">          0 :                 printf(&quot;if (ptr-&gt;%s%s == %s) { tabout(); printf(\&quot;%s\\n\&quot;);}\n&quot;, name, names[rdepth],$4,$3);</span>
+<span class="lineNum">     400 </span>            :             }
+<span class="lineNum">     401 </span>            : 
+<span class="lineNum">     402 </span><span class="lineCov">         85 :           free ($3);</span>
+<span class="lineNum">     403 </span><span class="lineCov">         85 :           free ($4);</span>
+<span class="lineNum">     404 </span>            :         }
+<span class="lineNum">     405 </span>            : 
+<span class="lineNum">     406 </span>            :         ;
+<span class="lineNum">     407 </span>            : 
+<span class="lineNum">     408 </span>            : 
+<span class="lineNum">     409 </span>            : 
+<span class="lineNum">     410 </span>            : %%
+<span class="lineNum">     411 </span>            : /* four modes
+<span class="lineNum">     412 </span>            : 
+<span class="lineNum">     413 </span>            :    -d write structure definitions for sysroff in host format
+<span class="lineNum">     414 </span>            :    -i write functions to swap into sysroff format in
+<span class="lineNum">     415 </span>            :    -o write functions to swap into sysroff format out
+<span class="lineNum">     416 </span>            :    -c write code to print info in human form */
+<span class="lineNum">     417 </span>            : 
+<span class="lineNum">     418 </span>            : int yydebug;
+<a name="419"><span class="lineNum">     419 </span>            : </a>
+<span class="lineNum">     420 </span>            : int
+<span class="lineNum">     421 </span><span class="lineCov">          1 : main (int ac, char **av)</span>
+<span class="lineNum">     422 </span>            : {
+<span class="lineNum">     423 </span><span class="lineCov">          1 :   yydebug=0;</span>
+<span class="lineNum">     424 </span><span class="lineCov">          1 :   if (ac &gt; 1)</span>
+<span class="lineNum">     425 </span><span class="lineCov">          1 :     writecode = av[1][1];</span>
+<span class="lineNum">     426 </span><span class="lineCov">          1 : if (writecode == 'd')</span>
+<span class="lineNum">     427 </span>            :   {
+<span class="lineNum">     428 </span><span class="lineCov">          1 :     printf(&quot;typedef struct { unsigned char *data; int len; } barray; \n&quot;);</span>
+<span class="lineNum">     429 </span><span class="lineCov">          1 :     printf(&quot;typedef  int INT;\n&quot;);</span>
+<span class="lineNum">     430 </span>            :     printf(&quot;typedef  char * CHARS;\n&quot;);
+<span class="lineNum">     431 </span>            : 
+<span class="lineNum">     432 </span>            :   }
+<span class="lineNum">     433 </span><span class="lineCov">          1 :   yyparse();</span>
+<span class="lineNum">     434 </span>            : return 0;
+<span class="lineNum">     435 </span>            : }
+<span class="lineNum">     436 </span>            : 
+<span class="lineNum">     437 </span>            : static int
+<span class="lineNum">     438 </span>            : yyerror (char *s)
+<span class="lineNum">     439 </span>            : {
+<span class="lineNum">     440 </span><span class="lineNoCov">          0 :   fprintf(stderr, &quot;%s\n&quot; , s);</span>
+<span class="lineNum">     441 </span>            :   return 0;
+<span class="lineNum">     442 </span>            : }
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13-14-ga5dd952</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>
