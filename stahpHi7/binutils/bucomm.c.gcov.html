@@ -1,0 +1,743 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - app.info - binutils/bucomm.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">binutils</a> - bucomm.c<span style="font-size: 80%;"> (source / <a href="bucomm.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">app.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">30</td>
+            <td class="headerCovTableEntry">242</td>
+            <td class="headerCovTableEntryLo">12.4 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2018-04-30 19:41:15</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">6</td>
+            <td class="headerCovTableEntry">25</td>
+            <td class="headerCovTableEntryLo">24.0 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /* bucomm.c -- Bin Utils COMmon code.</a>
+<span class="lineNum">       2 </span>            :    Copyright (C) 1991-2018 Free Software Foundation, Inc.
+<span class="lineNum">       3 </span>            : 
+<span class="lineNum">       4 </span>            :    This file is part of GNU Binutils.
+<span class="lineNum">       5 </span>            : 
+<span class="lineNum">       6 </span>            :    This program is free software; you can redistribute it and/or modify
+<span class="lineNum">       7 </span>            :    it under the terms of the GNU General Public License as published by
+<span class="lineNum">       8 </span>            :    the Free Software Foundation; either version 3 of the License, or
+<span class="lineNum">       9 </span>            :    (at your option) any later version.
+<span class="lineNum">      10 </span>            : 
+<span class="lineNum">      11 </span>            :    This program is distributed in the hope that it will be useful,
+<span class="lineNum">      12 </span>            :    but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      13 </span>            :    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      14 </span>            :    GNU General Public License for more details.
+<span class="lineNum">      15 </span>            : 
+<span class="lineNum">      16 </span>            :    You should have received a copy of the GNU General Public License
+<span class="lineNum">      17 </span>            :    along with this program; if not, write to the Free Software
+<span class="lineNum">      18 </span>            :    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA
+<span class="lineNum">      19 </span>            :    02110-1301, USA.  */
+<span class="lineNum">      20 </span>            : 
+<span class="lineNum">      21 </span>            : /* We might put this in a library someday so it could be dynamically
+<span class="lineNum">      22 </span>            :    loaded, but for now it's not necessary.  */
+<span class="lineNum">      23 </span>            : 
+<span class="lineNum">      24 </span>            : #include &quot;sysdep.h&quot;
+<span class="lineNum">      25 </span>            : #include &quot;bfd.h&quot;
+<span class="lineNum">      26 </span>            : #include &quot;libiberty.h&quot;
+<span class="lineNum">      27 </span>            : #include &quot;filenames.h&quot;
+<span class="lineNum">      28 </span>            : 
+<span class="lineNum">      29 </span>            : #include &lt;time.h&gt;         /* ctime, maybe time_t */
+<span class="lineNum">      30 </span>            : #include &lt;assert.h&gt;
+<span class="lineNum">      31 </span>            : #include &quot;bucomm.h&quot;
+<span class="lineNum">      32 </span>            : 
+<span class="lineNum">      33 </span>            : #ifndef HAVE_TIME_T_IN_TIME_H
+<span class="lineNum">      34 </span>            : #ifndef HAVE_TIME_T_IN_TYPES_H
+<span class="lineNum">      35 </span>            : typedef long time_t;
+<span class="lineNum">      36 </span>            : #endif
+<span class="lineNum">      37 </span>            : #endif
+<span class="lineNum">      38 </span>            : 
+<span class="lineNum">      39 </span>            : /* Error reporting.  */
+<span class="lineNum">      40 </span>            : 
+<span class="lineNum">      41 </span>            : char *program_name;
+<a name="42"><span class="lineNum">      42 </span>            : </a>
+<span class="lineNum">      43 </span>            : void
+<span class="lineNum">      44 </span><span class="lineCov">         25 : bfd_nonfatal (const char *string)</span>
+<span class="lineNum">      45 </span>            : {
+<span class="lineNum">      46 </span>            :   const char *errmsg;
+<span class="lineNum">      47 </span>            : 
+<span class="lineNum">      48 </span><span class="lineCov">         25 :   errmsg = bfd_errmsg (bfd_get_error ());</span>
+<span class="lineNum">      49 </span><span class="lineCov">         25 :   fflush (stdout);</span>
+<span class="lineNum">      50 </span><span class="lineCov">         25 :   if (string)</span>
+<span class="lineNum">      51 </span><span class="lineCov">         25 :     fprintf (stderr, &quot;%s: %s: %s\n&quot;, program_name, string, errmsg);</span>
+<span class="lineNum">      52 </span>            :   else
+<span class="lineNum">      53 </span><span class="lineNoCov">          0 :     fprintf (stderr, &quot;%s: %s\n&quot;, program_name, errmsg);</span>
+<span class="lineNum">      54 </span><span class="lineCov">         25 : }</span>
+<span class="lineNum">      55 </span>            : 
+<span class="lineNum">      56 </span>            : /* Issue a non fatal error message.  FILENAME, or if NULL then BFD,
+<span class="lineNum">      57 </span>            :    are used to indicate the problematic file.  SECTION, if non NULL,
+<span class="lineNum">      58 </span>            :    is used to provide a section name.  If FORMAT is non-null, then it
+<span class="lineNum">      59 </span>            :    is used to print additional information via vfprintf.  Finally the
+<span class="lineNum">      60 </span>            :    bfd error message is printed.  In summary, error messages are of
+<span class="lineNum">      61 </span>            :    one of the following forms:
+<span class="lineNum">      62 </span>            : 
+<span class="lineNum">      63 </span>            :    PROGRAM:file: bfd-error-message
+<span class="lineNum">      64 </span>            :    PROGRAM:file[section]: bfd-error-message
+<span class="lineNum">      65 </span>            :    PROGRAM:file: printf-message: bfd-error-message
+<span class="lineNum">      66 </span>            :    PROGRAM:file[section]: printf-message: bfd-error-message.  */
+<a name="67"><span class="lineNum">      67 </span>            : </a>
+<span class="lineNum">      68 </span>            : void
+<span class="lineNum">      69 </span><span class="lineNoCov">          0 : bfd_nonfatal_message (const char *filename,</span>
+<span class="lineNum">      70 </span>            :                       const bfd *abfd,
+<span class="lineNum">      71 </span>            :                       const asection *section,
+<span class="lineNum">      72 </span>            :                       const char *format, ...)
+<span class="lineNum">      73 </span>            : {
+<span class="lineNum">      74 </span>            :   const char *errmsg;
+<span class="lineNum">      75 </span>            :   const char *section_name;
+<span class="lineNum">      76 </span>            :   va_list args;
+<span class="lineNum">      77 </span>            : 
+<span class="lineNum">      78 </span><span class="lineNoCov">          0 :   errmsg = bfd_errmsg (bfd_get_error ());</span>
+<span class="lineNum">      79 </span><span class="lineNoCov">          0 :   fflush (stdout);</span>
+<span class="lineNum">      80 </span><span class="lineNoCov">          0 :   section_name = NULL;</span>
+<span class="lineNum">      81 </span><span class="lineNoCov">          0 :   va_start (args, format);</span>
+<span class="lineNum">      82 </span><span class="lineNoCov">          0 :   fprintf (stderr, &quot;%s&quot;, program_name);</span>
+<span class="lineNum">      83 </span>            : 
+<span class="lineNum">      84 </span><span class="lineNoCov">          0 :   if (abfd)</span>
+<span class="lineNum">      85 </span>            :     {
+<span class="lineNum">      86 </span><span class="lineNoCov">          0 :       if (!filename)</span>
+<span class="lineNum">      87 </span><span class="lineNoCov">          0 :         filename = bfd_get_archive_filename (abfd);</span>
+<span class="lineNum">      88 </span><span class="lineNoCov">          0 :       if (section)</span>
+<span class="lineNum">      89 </span><span class="lineNoCov">          0 :         section_name = bfd_get_section_name (abfd, section);</span>
+<span class="lineNum">      90 </span>            :     }
+<span class="lineNum">      91 </span><span class="lineNoCov">          0 :   if (section_name)</span>
+<span class="lineNum">      92 </span><span class="lineNoCov">          0 :     fprintf (stderr, &quot;:%s[%s]&quot;, filename, section_name);</span>
+<span class="lineNum">      93 </span>            :   else
+<span class="lineNum">      94 </span><span class="lineNoCov">          0 :     fprintf (stderr, &quot;:%s&quot;, filename);</span>
+<span class="lineNum">      95 </span>            : 
+<span class="lineNum">      96 </span><span class="lineNoCov">          0 :   if (format)</span>
+<span class="lineNum">      97 </span>            :     {
+<span class="lineNum">      98 </span><span class="lineNoCov">          0 :       fprintf (stderr, &quot;: &quot;);</span>
+<span class="lineNum">      99 </span><span class="lineNoCov">          0 :       vfprintf (stderr, format, args);</span>
+<span class="lineNum">     100 </span>            :     }
+<span class="lineNum">     101 </span><span class="lineNoCov">          0 :   fprintf (stderr, &quot;: %s\n&quot;, errmsg);</span>
+<span class="lineNum">     102 </span><span class="lineNoCov">          0 :   va_end (args);</span>
+<span class="lineNum">     103 </span><span class="lineNoCov">          0 : }</span>
+<a name="104"><span class="lineNum">     104 </span>            : </a>
+<span class="lineNum">     105 </span>            : void
+<span class="lineNum">     106 </span><span class="lineCov">          2 : bfd_fatal (const char *string)</span>
+<span class="lineNum">     107 </span>            : {
+<span class="lineNum">     108 </span><span class="lineCov">          2 :   bfd_nonfatal (string);</span>
+<span class="lineNum">     109 </span><span class="lineCov">          2 :   xexit (1);</span>
+<span class="lineNum">     110 </span>            : }
+<a name="111"><span class="lineNum">     111 </span>            : </a>
+<span class="lineNum">     112 </span>            : void
+<span class="lineNum">     113 </span><span class="lineCov">        133 : report (const char * format, va_list args)</span>
+<span class="lineNum">     114 </span>            : {
+<span class="lineNum">     115 </span><span class="lineCov">        133 :   fflush (stdout);</span>
+<span class="lineNum">     116 </span><span class="lineCov">        266 :   fprintf (stderr, &quot;%s: &quot;, program_name);</span>
+<span class="lineNum">     117 </span><span class="lineCov">        266 :   vfprintf (stderr, format, args);</span>
+<span class="lineNum">     118 </span><span class="lineCov">        133 :   putc ('\n', stderr);</span>
+<span class="lineNum">     119 </span><span class="lineCov">        133 : }</span>
+<a name="120"><span class="lineNum">     120 </span>            : </a>
+<span class="lineNum">     121 </span>            : void
+<span class="lineNum">     122 </span><span class="lineNoCov">          0 : fatal (const char *format, ...)</span>
+<span class="lineNum">     123 </span>            : {
+<span class="lineNum">     124 </span>            :   va_list args;
+<span class="lineNum">     125 </span>            : 
+<span class="lineNum">     126 </span><span class="lineNoCov">          0 :   va_start (args, format);</span>
+<span class="lineNum">     127 </span>            : 
+<span class="lineNum">     128 </span><span class="lineNoCov">          0 :   report (format, args);</span>
+<span class="lineNum">     129 </span><span class="lineNoCov">          0 :   va_end (args);</span>
+<span class="lineNum">     130 </span><span class="lineNoCov">          0 :   xexit (1);</span>
+<span class="lineNum">     131 </span>            : }
+<a name="132"><span class="lineNum">     132 </span>            : </a>
+<span class="lineNum">     133 </span>            : void
+<span class="lineNum">     134 </span><span class="lineCov">        133 : non_fatal (const char *format, ...)</span>
+<span class="lineNum">     135 </span>            : {
+<span class="lineNum">     136 </span>            :   va_list args;
+<span class="lineNum">     137 </span>            : 
+<span class="lineNum">     138 </span><span class="lineCov">        133 :   va_start (args, format);</span>
+<span class="lineNum">     139 </span>            : 
+<span class="lineNum">     140 </span><span class="lineCov">        133 :   report (format, args);</span>
+<span class="lineNum">     141 </span><span class="lineCov">        133 :   va_end (args);</span>
+<span class="lineNum">     142 </span><span class="lineCov">        133 : }</span>
+<span class="lineNum">     143 </span>            : 
+<span class="lineNum">     144 </span>            : /* Set the default BFD target based on the configured target.  Doing
+<span class="lineNum">     145 </span>            :    this permits the binutils to be configured for a particular target,
+<span class="lineNum">     146 </span>            :    and linked against a shared BFD library which was configured for a
+<span class="lineNum">     147 </span>            :    different target.  */
+<a name="148"><span class="lineNum">     148 </span>            : </a>
+<span class="lineNum">     149 </span>            : void
+<span class="lineNum">     150 </span><span class="lineCov">         82 : set_default_bfd_target (void)</span>
+<span class="lineNum">     151 </span>            : {
+<span class="lineNum">     152 </span>            :   /* The macro TARGET is defined by Makefile.  */
+<span class="lineNum">     153 </span><span class="lineCov">         82 :   const char *target = TARGET;</span>
+<span class="lineNum">     154 </span>            : 
+<span class="lineNum">     155 </span><span class="lineCov">         82 :   if (! bfd_set_default_target (target))</span>
+<span class="lineNum">     156 </span><span class="lineNoCov">          0 :     fatal (_(&quot;can't set BFD default target to `%s': %s&quot;),</span>
+<span class="lineNum">     157 </span>            :            target, bfd_errmsg (bfd_get_error ()));
+<span class="lineNum">     158 </span><span class="lineCov">         82 : }</span>
+<span class="lineNum">     159 </span>            : 
+<span class="lineNum">     160 </span>            : /* After a FALSE return from bfd_check_format_matches with
+<span class="lineNum">     161 </span>            :    bfd_get_error () == bfd_error_file_ambiguously_recognized, print
+<span class="lineNum">     162 </span>            :    the possible matching targets.  */
+<a name="163"><span class="lineNum">     163 </span>            : </a>
+<span class="lineNum">     164 </span>            : void
+<span class="lineNum">     165 </span><span class="lineNoCov">          0 : list_matching_formats (char **p)</span>
+<span class="lineNum">     166 </span>            : {
+<span class="lineNum">     167 </span><span class="lineNoCov">          0 :   fflush (stdout);</span>
+<span class="lineNum">     168 </span><span class="lineNoCov">          0 :   fprintf (stderr, _(&quot;%s: Matching formats:&quot;), program_name);</span>
+<span class="lineNum">     169 </span><span class="lineNoCov">          0 :   while (*p)</span>
+<span class="lineNum">     170 </span><span class="lineNoCov">          0 :     fprintf (stderr, &quot; %s&quot;, *p++);</span>
+<span class="lineNum">     171 </span><span class="lineNoCov">          0 :   fputc ('\n', stderr);</span>
+<span class="lineNum">     172 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     173 </span>            : 
+<span class="lineNum">     174 </span>            : /* List the supported targets.  */
+<a name="175"><span class="lineNum">     175 </span>            : </a>
+<span class="lineNum">     176 </span>            : void
+<span class="lineNum">     177 </span><span class="lineNoCov">          0 : list_supported_targets (const char *name, FILE *f)</span>
+<span class="lineNum">     178 </span>            : {
+<span class="lineNum">     179 </span>            :   int t;
+<span class="lineNum">     180 </span>            :   const char **targ_names;
+<span class="lineNum">     181 </span>            : 
+<span class="lineNum">     182 </span><span class="lineNoCov">          0 :   if (name == NULL)</span>
+<span class="lineNum">     183 </span><span class="lineNoCov">          0 :     fprintf (f, _(&quot;Supported targets:&quot;));</span>
+<span class="lineNum">     184 </span>            :   else
+<span class="lineNum">     185 </span><span class="lineNoCov">          0 :     fprintf (f, _(&quot;%s: supported targets:&quot;), name);</span>
+<span class="lineNum">     186 </span>            : 
+<span class="lineNum">     187 </span><span class="lineNoCov">          0 :   targ_names = bfd_target_list ();</span>
+<span class="lineNum">     188 </span><span class="lineNoCov">          0 :   for (t = 0; targ_names[t] != NULL; t++)</span>
+<span class="lineNum">     189 </span><span class="lineNoCov">          0 :     fprintf (f, &quot; %s&quot;, targ_names[t]);</span>
+<span class="lineNum">     190 </span><span class="lineNoCov">          0 :   fprintf (f, &quot;\n&quot;);</span>
+<span class="lineNum">     191 </span><span class="lineNoCov">          0 :   free (targ_names);</span>
+<span class="lineNum">     192 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     193 </span>            : 
+<span class="lineNum">     194 </span>            : /* List the supported architectures.  */
+<a name="195"><span class="lineNum">     195 </span>            : </a>
+<span class="lineNum">     196 </span>            : void
+<span class="lineNum">     197 </span><span class="lineNoCov">          0 : list_supported_architectures (const char *name, FILE *f)</span>
+<span class="lineNum">     198 </span>            : {
+<span class="lineNum">     199 </span>            :   const char ** arch;
+<span class="lineNum">     200 </span>            :   const char ** arches;
+<span class="lineNum">     201 </span>            : 
+<span class="lineNum">     202 </span><span class="lineNoCov">          0 :   if (name == NULL)</span>
+<span class="lineNum">     203 </span><span class="lineNoCov">          0 :     fprintf (f, _(&quot;Supported architectures:&quot;));</span>
+<span class="lineNum">     204 </span>            :   else
+<span class="lineNum">     205 </span><span class="lineNoCov">          0 :     fprintf (f, _(&quot;%s: supported architectures:&quot;), name);</span>
+<span class="lineNum">     206 </span>            : 
+<span class="lineNum">     207 </span><span class="lineNoCov">          0 :   for (arch = arches = bfd_arch_list (); *arch; arch++)</span>
+<span class="lineNum">     208 </span><span class="lineNoCov">          0 :     fprintf (f, &quot; %s&quot;, *arch);</span>
+<span class="lineNum">     209 </span><span class="lineNoCov">          0 :   fprintf (f, &quot;\n&quot;);</span>
+<span class="lineNum">     210 </span><span class="lineNoCov">          0 :   free (arches);</span>
+<span class="lineNum">     211 </span><span class="lineNoCov">          0 : }</span>
+<a name="212"><span class="lineNum">     212 </span>            : </a>
+<span class="lineNum">     213 </span>            : static const char *
+<span class="lineNum">     214 </span><span class="lineNoCov">          0 : endian_string (enum bfd_endian endian)</span>
+<span class="lineNum">     215 </span>            : {
+<span class="lineNum">     216 </span><span class="lineNoCov">          0 :   switch (endian)</span>
+<span class="lineNum">     217 </span>            :     {
+<span class="lineNum">     218 </span><span class="lineNoCov">          0 :     case BFD_ENDIAN_BIG: return _(&quot;big endian&quot;);</span>
+<span class="lineNum">     219 </span><span class="lineNoCov">          0 :     case BFD_ENDIAN_LITTLE: return _(&quot;little endian&quot;);</span>
+<span class="lineNum">     220 </span><span class="lineNoCov">          0 :     default: return _(&quot;endianness unknown&quot;);</span>
+<span class="lineNum">     221 </span>            :     }
+<span class="lineNum">     222 </span>            : }
+<span class="lineNum">     223 </span>            : 
+<span class="lineNum">     224 </span>            : /* Data passed to do_display_target and other target iterators.  */
+<span class="lineNum">     225 </span>            : 
+<span class="lineNum">     226 </span>            : struct display_target {
+<span class="lineNum">     227 </span>            :   /* Temp file.  */
+<span class="lineNum">     228 </span>            :   char *filename;
+<span class="lineNum">     229 </span>            :   /* Return status.  */
+<span class="lineNum">     230 </span>            :   int error;
+<span class="lineNum">     231 </span>            :   /* Number of targets.  */
+<span class="lineNum">     232 </span>            :   int count;
+<span class="lineNum">     233 </span>            :   /* Size of info in bytes.  */
+<span class="lineNum">     234 </span>            :   size_t alloc;
+<span class="lineNum">     235 </span>            :   /* Per-target info.  */
+<span class="lineNum">     236 </span>            :   struct {
+<span class="lineNum">     237 </span>            :     /* Target name.  */
+<span class="lineNum">     238 </span>            :     const char *name;
+<span class="lineNum">     239 </span>            :     /* Non-zero if target/arch combination supported.  */
+<span class="lineNum">     240 </span>            :     unsigned char arch[bfd_arch_last - bfd_arch_obscure - 1];
+<span class="lineNum">     241 </span>            :   } *info;
+<span class="lineNum">     242 </span>            : };
+<span class="lineNum">     243 </span>            : 
+<span class="lineNum">     244 </span>            : /* List the targets that BFD is configured to support, each followed
+<span class="lineNum">     245 </span>            :    by its endianness and the architectures it supports.  Also build
+<span class="lineNum">     246 </span>            :    info about target/archs.  */
+<a name="247"><span class="lineNum">     247 </span>            : </a>
+<span class="lineNum">     248 </span>            : static int
+<span class="lineNum">     249 </span><span class="lineNoCov">          0 : do_display_target (const bfd_target *targ, void *data)</span>
+<span class="lineNum">     250 </span>            : {
+<span class="lineNum">     251 </span><span class="lineNoCov">          0 :   struct display_target *param = (struct display_target *) data;</span>
+<span class="lineNum">     252 </span>            :   bfd *abfd;
+<span class="lineNum">     253 </span>            :   size_t amt;
+<span class="lineNum">     254 </span>            : 
+<span class="lineNum">     255 </span><span class="lineNoCov">          0 :   param-&gt;count += 1;</span>
+<span class="lineNum">     256 </span><span class="lineNoCov">          0 :   amt = param-&gt;count * sizeof (*param-&gt;info);</span>
+<span class="lineNum">     257 </span><span class="lineNoCov">          0 :   if (param-&gt;alloc &lt; amt)</span>
+<span class="lineNum">     258 </span>            :     {
+<span class="lineNum">     259 </span><span class="lineNoCov">          0 :       size_t size = ((param-&gt;count &lt; 64 ? 64 : param-&gt;count)</span>
+<span class="lineNum">     260 </span><span class="lineNoCov">          0 :                      * sizeof (*param-&gt;info) * 2);</span>
+<span class="lineNum">     261 </span><span class="lineNoCov">          0 :       param-&gt;info = xrealloc (param-&gt;info, size);</span>
+<span class="lineNum">     262 </span><span class="lineNoCov">          0 :       memset ((char *) param-&gt;info + param-&gt;alloc, 0, size - param-&gt;alloc);</span>
+<span class="lineNum">     263 </span><span class="lineNoCov">          0 :       param-&gt;alloc = size;</span>
+<span class="lineNum">     264 </span>            :     }
+<span class="lineNum">     265 </span><span class="lineNoCov">          0 :   param-&gt;info[param-&gt;count - 1].name = targ-&gt;name;</span>
+<span class="lineNum">     266 </span>            : 
+<span class="lineNum">     267 </span><span class="lineNoCov">          0 :   printf (_(&quot;%s\n (header %s, data %s)\n&quot;), targ-&gt;name,</span>
+<span class="lineNum">     268 </span>            :           endian_string (targ-&gt;header_byteorder),
+<span class="lineNum">     269 </span>            :           endian_string (targ-&gt;byteorder));
+<span class="lineNum">     270 </span>            : 
+<span class="lineNum">     271 </span><span class="lineNoCov">          0 :   abfd = bfd_openw (param-&gt;filename, targ-&gt;name);</span>
+<span class="lineNum">     272 </span><span class="lineNoCov">          0 :   if (abfd == NULL)</span>
+<span class="lineNum">     273 </span>            :     {
+<span class="lineNum">     274 </span><span class="lineNoCov">          0 :       bfd_nonfatal (param-&gt;filename);</span>
+<span class="lineNum">     275 </span><span class="lineNoCov">          0 :       param-&gt;error = 1;</span>
+<span class="lineNum">     276 </span>            :     }
+<span class="lineNum">     277 </span><span class="lineNoCov">          0 :   else if (!bfd_set_format (abfd, bfd_object))</span>
+<span class="lineNum">     278 </span>            :     {
+<span class="lineNum">     279 </span><span class="lineNoCov">          0 :       if (bfd_get_error () != bfd_error_invalid_operation)</span>
+<span class="lineNum">     280 </span>            :         {
+<span class="lineNum">     281 </span><span class="lineNoCov">          0 :           bfd_nonfatal (targ-&gt;name);</span>
+<span class="lineNum">     282 </span><span class="lineNoCov">          0 :           param-&gt;error = 1;</span>
+<span class="lineNum">     283 </span>            :         }
+<span class="lineNum">     284 </span>            :     }
+<span class="lineNum">     285 </span>            :   else
+<span class="lineNum">     286 </span>            :     {
+<span class="lineNum">     287 </span>            :       enum bfd_architecture a;
+<span class="lineNum">     288 </span>            : 
+<span class="lineNum">     289 </span><span class="lineNoCov">          0 :       for (a = bfd_arch_obscure + 1; a &lt; bfd_arch_last; a++)</span>
+<span class="lineNum">     290 </span><span class="lineNoCov">          0 :         if (bfd_set_arch_mach (abfd, a, 0))</span>
+<span class="lineNum">     291 </span>            :           {
+<span class="lineNum">     292 </span><span class="lineNoCov">          0 :             printf (&quot;  %s\n&quot;, bfd_printable_arch_mach (a, 0));</span>
+<span class="lineNum">     293 </span><span class="lineNoCov">          0 :             param-&gt;info[param-&gt;count - 1].arch[a - bfd_arch_obscure - 1] = 1;</span>
+<span class="lineNum">     294 </span>            :           }
+<span class="lineNum">     295 </span>            :     }
+<span class="lineNum">     296 </span><span class="lineNoCov">          0 :   if (abfd != NULL)</span>
+<span class="lineNum">     297 </span><span class="lineNoCov">          0 :     bfd_close_all_done (abfd);</span>
+<span class="lineNum">     298 </span>            : 
+<span class="lineNum">     299 </span><span class="lineNoCov">          0 :   return param-&gt;error;</span>
+<span class="lineNum">     300 </span>            : }
+<a name="301"><span class="lineNum">     301 </span>            : </a>
+<span class="lineNum">     302 </span>            : static void
+<span class="lineNum">     303 </span><span class="lineNoCov">          0 : display_target_list (struct display_target *arg)</span>
+<span class="lineNum">     304 </span>            : {
+<span class="lineNum">     305 </span><span class="lineNoCov">          0 :   arg-&gt;filename = make_temp_file (NULL);</span>
+<span class="lineNum">     306 </span><span class="lineNoCov">          0 :   arg-&gt;error = 0;</span>
+<span class="lineNum">     307 </span><span class="lineNoCov">          0 :   arg-&gt;count = 0;</span>
+<span class="lineNum">     308 </span><span class="lineNoCov">          0 :   arg-&gt;alloc = 0;</span>
+<span class="lineNum">     309 </span><span class="lineNoCov">          0 :   arg-&gt;info = NULL;</span>
+<span class="lineNum">     310 </span>            : 
+<span class="lineNum">     311 </span><span class="lineNoCov">          0 :   bfd_iterate_over_targets (do_display_target, arg);</span>
+<span class="lineNum">     312 </span>            : 
+<span class="lineNum">     313 </span><span class="lineNoCov">          0 :   unlink (arg-&gt;filename);</span>
+<span class="lineNum">     314 </span><span class="lineNoCov">          0 :   free (arg-&gt;filename);</span>
+<span class="lineNum">     315 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     316 </span>            : 
+<span class="lineNum">     317 </span>            : /* Calculate how many targets we can print across the page.  */
+<a name="318"><span class="lineNum">     318 </span>            : </a>
+<span class="lineNum">     319 </span>            : static int
+<span class="lineNum">     320 </span><span class="lineNoCov">          0 : do_info_size (int targ, int width, const struct display_target *arg)</span>
+<span class="lineNum">     321 </span>            : {
+<span class="lineNum">     322 </span><span class="lineNoCov">          0 :   while (targ &lt; arg-&gt;count)</span>
+<span class="lineNum">     323 </span>            :     {
+<span class="lineNum">     324 </span><span class="lineNoCov">          0 :       width -= strlen (arg-&gt;info[targ].name) + 1;</span>
+<span class="lineNum">     325 </span><span class="lineNoCov">          0 :       if (width &lt; 0)</span>
+<span class="lineNum">     326 </span>            :         return targ;
+<span class="lineNum">     327 </span><span class="lineNoCov">          0 :       ++targ;</span>
+<span class="lineNum">     328 </span>            :     }
+<span class="lineNum">     329 </span>            :   return targ;
+<span class="lineNum">     330 </span>            : }
+<span class="lineNum">     331 </span>            : 
+<span class="lineNum">     332 </span>            : /* Print header of target names.  */
+<span class="lineNum">     333 </span>            : 
+<span class="lineNum">     334 </span>            : static void
+<span class="lineNum">     335 </span>            : do_info_header (int targ, int stop_targ, const struct display_target *arg)
+<span class="lineNum">     336 </span>            : {
+<span class="lineNum">     337 </span><span class="lineNoCov">          0 :   while (targ != stop_targ)</span>
+<span class="lineNum">     338 </span><span class="lineNoCov">          0 :     printf (&quot;%s &quot;, arg-&gt;info[targ++].name);</span>
+<span class="lineNum">     339 </span>            : }
+<span class="lineNum">     340 </span>            : 
+<span class="lineNum">     341 </span>            : /* Print a table row.  */
+<a name="342"><span class="lineNum">     342 </span>            : </a>
+<span class="lineNum">     343 </span>            : static void
+<span class="lineNum">     344 </span><span class="lineNoCov">          0 : do_info_row (int targ, int stop_targ, enum bfd_architecture a,</span>
+<span class="lineNum">     345 </span>            :              const struct display_target *arg)
+<span class="lineNum">     346 </span>            : {
+<span class="lineNum">     347 </span><span class="lineNoCov">          0 :   while (targ != stop_targ)</span>
+<span class="lineNum">     348 </span>            :     {
+<span class="lineNum">     349 </span><span class="lineNoCov">          0 :       if (arg-&gt;info[targ].arch[a - bfd_arch_obscure - 1])</span>
+<span class="lineNum">     350 </span><span class="lineNoCov">          0 :         fputs (arg-&gt;info[targ].name, stdout);</span>
+<span class="lineNum">     351 </span>            :       else
+<span class="lineNum">     352 </span>            :         {
+<span class="lineNum">     353 </span><span class="lineNoCov">          0 :           int l = strlen (arg-&gt;info[targ].name);</span>
+<span class="lineNum">     354 </span><span class="lineNoCov">          0 :           while (l--)</span>
+<span class="lineNum">     355 </span>            :             putchar ('-');
+<span class="lineNum">     356 </span>            :         }
+<span class="lineNum">     357 </span><span class="lineNoCov">          0 :       ++targ;</span>
+<span class="lineNum">     358 </span><span class="lineNoCov">          0 :       if (targ != stop_targ)</span>
+<span class="lineNum">     359 </span>            :         putchar (' ');
+<span class="lineNum">     360 </span>            :     }
+<span class="lineNum">     361 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     362 </span>            : 
+<span class="lineNum">     363 </span>            : /* Print tables of all the target-architecture combinations that
+<span class="lineNum">     364 </span>            :    BFD has been configured to support.  */
+<a name="365"><span class="lineNum">     365 </span>            : </a>
+<span class="lineNum">     366 </span>            : static void
+<span class="lineNum">     367 </span><span class="lineNoCov">          0 : display_target_tables (const struct display_target *arg)</span>
+<span class="lineNum">     368 </span>            : {
+<span class="lineNum">     369 </span>            :   const char *columns;
+<span class="lineNum">     370 </span>            :   int width, start_targ, stop_targ;
+<span class="lineNum">     371 </span>            :   enum bfd_architecture arch;
+<span class="lineNum">     372 </span><span class="lineNoCov">          0 :   int longest_arch = 0;</span>
+<span class="lineNum">     373 </span>            : 
+<span class="lineNum">     374 </span><span class="lineNoCov">          0 :   for (arch = bfd_arch_obscure + 1; arch &lt; bfd_arch_last; arch++)</span>
+<span class="lineNum">     375 </span>            :     {
+<span class="lineNum">     376 </span><span class="lineNoCov">          0 :       const char *s = bfd_printable_arch_mach (arch, 0);</span>
+<span class="lineNum">     377 </span><span class="lineNoCov">          0 :       int len = strlen (s);</span>
+<span class="lineNum">     378 </span><span class="lineNoCov">          0 :       if (len &gt; longest_arch)</span>
+<span class="lineNum">     379 </span><span class="lineNoCov">          0 :         longest_arch = len;</span>
+<span class="lineNum">     380 </span>            :     }
+<span class="lineNum">     381 </span>            : 
+<span class="lineNum">     382 </span><span class="lineNoCov">          0 :   width = 0;</span>
+<span class="lineNum">     383 </span><span class="lineNoCov">          0 :   columns = getenv (&quot;COLUMNS&quot;);</span>
+<span class="lineNum">     384 </span><span class="lineNoCov">          0 :   if (columns != NULL)</span>
+<span class="lineNum">     385 </span><span class="lineNoCov">          0 :     width = atoi (columns);</span>
+<span class="lineNum">     386 </span><span class="lineNoCov">          0 :   if (width == 0)</span>
+<span class="lineNum">     387 </span><span class="lineNoCov">          0 :     width = 80;</span>
+<span class="lineNum">     388 </span>            : 
+<span class="lineNum">     389 </span><span class="lineNoCov">          0 :   for (start_targ = 0; start_targ &lt; arg-&gt;count; start_targ = stop_targ)</span>
+<span class="lineNum">     390 </span>            :     {
+<span class="lineNum">     391 </span><span class="lineNoCov">          0 :       stop_targ = do_info_size (start_targ, width - longest_arch - 1, arg);</span>
+<span class="lineNum">     392 </span>            : 
+<span class="lineNum">     393 </span><span class="lineNoCov">          0 :       printf (&quot;\n%*s&quot;, longest_arch + 1, &quot; &quot;);</span>
+<span class="lineNum">     394 </span><span class="lineNoCov">          0 :       do_info_header (start_targ, stop_targ, arg);</span>
+<span class="lineNum">     395 </span><span class="lineNoCov">          0 :       putchar ('\n');</span>
+<span class="lineNum">     396 </span>            : 
+<span class="lineNum">     397 </span><span class="lineNoCov">          0 :       for (arch = bfd_arch_obscure + 1; arch &lt; bfd_arch_last; arch++)</span>
+<span class="lineNum">     398 </span>            :         {
+<span class="lineNum">     399 </span><span class="lineNoCov">          0 :           if (strcmp (bfd_printable_arch_mach (arch, 0), &quot;UNKNOWN!&quot;) != 0)</span>
+<span class="lineNum">     400 </span>            :             {
+<span class="lineNum">     401 </span><span class="lineNoCov">          0 :               printf (&quot;%*s &quot;, longest_arch,</span>
+<span class="lineNum">     402 </span>            :                       bfd_printable_arch_mach (arch, 0));
+<span class="lineNum">     403 </span>            : 
+<span class="lineNum">     404 </span><span class="lineNoCov">          0 :               do_info_row (start_targ, stop_targ, arch, arg);</span>
+<span class="lineNum">     405 </span>            :               putchar ('\n');
+<span class="lineNum">     406 </span>            :             }
+<span class="lineNum">     407 </span>            :         }
+<span class="lineNum">     408 </span>            :     }
+<span class="lineNum">     409 </span><span class="lineNoCov">          0 : }</span>
+<a name="410"><span class="lineNum">     410 </span>            : </a>
+<span class="lineNum">     411 </span>            : int
+<span class="lineNum">     412 </span><span class="lineNoCov">          0 : display_info (void)</span>
+<span class="lineNum">     413 </span>            : {
+<span class="lineNum">     414 </span>            :   struct display_target arg;
+<span class="lineNum">     415 </span>            : 
+<span class="lineNum">     416 </span><span class="lineNoCov">          0 :   printf (_(&quot;BFD header file version %s\n&quot;), BFD_VERSION_STRING);</span>
+<span class="lineNum">     417 </span>            : 
+<span class="lineNum">     418 </span><span class="lineNoCov">          0 :   display_target_list (&amp;arg);</span>
+<span class="lineNum">     419 </span><span class="lineNoCov">          0 :   if (!arg.error)</span>
+<span class="lineNum">     420 </span><span class="lineNoCov">          0 :     display_target_tables (&amp;arg);</span>
+<span class="lineNum">     421 </span>            : 
+<span class="lineNum">     422 </span><span class="lineNoCov">          0 :   return arg.error;</span>
+<span class="lineNum">     423 </span>            : }
+<span class="lineNum">     424 </span>            : 
+<span class="lineNum">     425 </span>            : /* Display the archive header for an element as if it were an ls -l listing:
+<span class="lineNum">     426 </span>            : 
+<span class="lineNum">     427 </span>            :    Mode       User\tGroup\tSize\tDate               Name */
+<a name="428"><span class="lineNum">     428 </span>            : </a>
+<span class="lineNum">     429 </span>            : void
+<span class="lineNum">     430 </span><span class="lineNoCov">          0 : print_arelt_descr (FILE *file, bfd *abfd, bfd_boolean verbose)</span>
+<span class="lineNum">     431 </span>            : {
+<span class="lineNum">     432 </span>            :   struct stat buf;
+<span class="lineNum">     433 </span>            : 
+<span class="lineNum">     434 </span><span class="lineNoCov">          0 :   if (verbose)</span>
+<span class="lineNum">     435 </span>            :     {
+<span class="lineNum">     436 </span><span class="lineNoCov">          0 :       if (bfd_stat_arch_elt (abfd, &amp;buf) == 0)</span>
+<span class="lineNum">     437 </span>            :         {
+<span class="lineNum">     438 </span>            :           char modebuf[11];
+<span class="lineNum">     439 </span>            :           char timebuf[40];
+<span class="lineNum">     440 </span><span class="lineNoCov">          0 :           time_t when = buf.st_mtime;</span>
+<span class="lineNum">     441 </span><span class="lineNoCov">          0 :           const char *ctime_result = (const char *) ctime (&amp;when);</span>
+<span class="lineNum">     442 </span>            :           bfd_size_type size;
+<span class="lineNum">     443 </span>            : 
+<span class="lineNum">     444 </span>            :           /* PR binutils/17605: Check for corrupt time values.  */
+<span class="lineNum">     445 </span><span class="lineNoCov">          0 :           if (ctime_result == NULL)</span>
+<span class="lineNum">     446 </span><span class="lineNoCov">          0 :             sprintf (timebuf, _(&quot;&lt;time data corrupt&gt;&quot;));</span>
+<span class="lineNum">     447 </span>            :           else
+<span class="lineNum">     448 </span>            :             /* POSIX format:  skip weekday and seconds from ctime output.  */
+<span class="lineNum">     449 </span><span class="lineNoCov">          0 :             sprintf (timebuf, &quot;%.12s %.4s&quot;, ctime_result + 4, ctime_result + 20);</span>
+<span class="lineNum">     450 </span>            : 
+<span class="lineNum">     451 </span><span class="lineNoCov">          0 :           mode_string (buf.st_mode, modebuf);</span>
+<span class="lineNum">     452 </span><span class="lineNoCov">          0 :           modebuf[10] = '\0';</span>
+<span class="lineNum">     453 </span><span class="lineNoCov">          0 :           size = buf.st_size;</span>
+<span class="lineNum">     454 </span>            :           /* POSIX 1003.2/D11 says to skip first character (entry type).  */
+<span class="lineNum">     455 </span><span class="lineNoCov">          0 :           fprintf (file, &quot;%s %ld/%ld %6&quot; BFD_VMA_FMT &quot;u %s &quot;, modebuf + 1,</span>
+<span class="lineNum">     456 </span><span class="lineNoCov">          0 :                    (long) buf.st_uid, (long) buf.st_gid,</span>
+<span class="lineNum">     457 </span>            :                    size, timebuf);
+<span class="lineNum">     458 </span>            :         }
+<span class="lineNum">     459 </span>            :     }
+<span class="lineNum">     460 </span>            : 
+<span class="lineNum">     461 </span><span class="lineNoCov">          0 :   fprintf (file, &quot;%s\n&quot;, bfd_get_filename (abfd));</span>
+<span class="lineNum">     462 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     463 </span>            : 
+<span class="lineNum">     464 </span>            : /* Return a path for a new temporary file in the same directory
+<span class="lineNum">     465 </span>            :    as file PATH.  */
+<a name="466"><span class="lineNum">     466 </span>            : </a>
+<span class="lineNum">     467 </span>            : static char *
+<span class="lineNum">     468 </span><span class="lineNoCov">          0 : template_in_dir (const char *path)</span>
+<span class="lineNum">     469 </span>            : {
+<span class="lineNum">     470 </span>            : #define template &quot;stXXXXXX&quot;
+<span class="lineNum">     471 </span><span class="lineNoCov">          0 :   const char *slash = strrchr (path, '/');</span>
+<span class="lineNum">     472 </span>            :   char *tmpname;
+<span class="lineNum">     473 </span>            :   size_t len;
+<span class="lineNum">     474 </span>            : 
+<span class="lineNum">     475 </span>            : #ifdef HAVE_DOS_BASED_FILE_SYSTEM
+<span class="lineNum">     476 </span>            :   {
+<span class="lineNum">     477 </span>            :     /* We could have foo/bar\\baz, or foo\\bar, or d:bar.  */
+<span class="lineNum">     478 </span>            :     char *bslash = strrchr (path, '\\');
+<span class="lineNum">     479 </span>            : 
+<span class="lineNum">     480 </span>            :     if (slash == NULL || (bslash != NULL &amp;&amp; bslash &gt; slash))
+<span class="lineNum">     481 </span>            :       slash = bslash;
+<span class="lineNum">     482 </span>            :     if (slash == NULL &amp;&amp; path[0] != '\0' &amp;&amp; path[1] == ':')
+<span class="lineNum">     483 </span>            :       slash = path + 1;
+<span class="lineNum">     484 </span>            :   }
+<span class="lineNum">     485 </span>            : #endif
+<span class="lineNum">     486 </span>            : 
+<span class="lineNum">     487 </span><span class="lineNoCov">          0 :   if (slash != (char *) NULL)</span>
+<span class="lineNum">     488 </span>            :     {
+<span class="lineNum">     489 </span><span class="lineNoCov">          0 :       len = slash - path;</span>
+<span class="lineNum">     490 </span><span class="lineNoCov">          0 :       tmpname = (char *) xmalloc (len + sizeof (template) + 2);</span>
+<span class="lineNum">     491 </span><span class="lineNoCov">          0 :       memcpy (tmpname, path, len);</span>
+<span class="lineNum">     492 </span>            : 
+<span class="lineNum">     493 </span>            : #ifdef HAVE_DOS_BASED_FILE_SYSTEM
+<span class="lineNum">     494 </span>            :       /* If tmpname is &quot;X:&quot;, appending a slash will make it a root
+<span class="lineNum">     495 </span>            :          directory on drive X, which is NOT the same as the current
+<span class="lineNum">     496 </span>            :          directory on drive X.  */
+<span class="lineNum">     497 </span>            :       if (len == 2 &amp;&amp; tmpname[1] == ':')
+<span class="lineNum">     498 </span>            :         tmpname[len++] = '.';
+<span class="lineNum">     499 </span>            : #endif
+<span class="lineNum">     500 </span><span class="lineNoCov">          0 :       tmpname[len++] = '/';</span>
+<span class="lineNum">     501 </span>            :     }
+<span class="lineNum">     502 </span>            :   else
+<span class="lineNum">     503 </span>            :     {
+<span class="lineNum">     504 </span><span class="lineNoCov">          0 :       tmpname = (char *) xmalloc (sizeof (template));</span>
+<span class="lineNum">     505 </span><span class="lineNoCov">          0 :       len = 0;</span>
+<span class="lineNum">     506 </span>            :     }
+<span class="lineNum">     507 </span>            : 
+<span class="lineNum">     508 </span><span class="lineNoCov">          0 :   memcpy (tmpname + len, template, sizeof (template));</span>
+<span class="lineNum">     509 </span><span class="lineNoCov">          0 :   return tmpname;</span>
+<span class="lineNum">     510 </span>            : #undef template
+<span class="lineNum">     511 </span>            : }
+<span class="lineNum">     512 </span>            : 
+<span class="lineNum">     513 </span>            : /* Return the name of a created temporary file in the same directory
+<span class="lineNum">     514 </span>            :    as FILENAME.  */
+<a name="515"><span class="lineNum">     515 </span>            : </a>
+<span class="lineNum">     516 </span>            : char *
+<span class="lineNum">     517 </span><span class="lineNoCov">          0 : make_tempname (char *filename)</span>
+<span class="lineNum">     518 </span>            : {
+<span class="lineNum">     519 </span><span class="lineNoCov">          0 :   char *tmpname = template_in_dir (filename);</span>
+<span class="lineNum">     520 </span>            :   int fd;
+<span class="lineNum">     521 </span>            : 
+<span class="lineNum">     522 </span>            : #ifdef HAVE_MKSTEMP
+<span class="lineNum">     523 </span><span class="lineNoCov">          0 :   fd = mkstemp (tmpname);</span>
+<span class="lineNum">     524 </span>            : #else
+<span class="lineNum">     525 </span>            :   tmpname = mktemp (tmpname);
+<span class="lineNum">     526 </span>            :   if (tmpname == NULL)
+<span class="lineNum">     527 </span>            :     return NULL;
+<span class="lineNum">     528 </span>            :   fd = open (tmpname, O_RDWR | O_CREAT | O_EXCL, 0600);
+<span class="lineNum">     529 </span>            : #endif
+<span class="lineNum">     530 </span><span class="lineNoCov">          0 :   if (fd == -1)</span>
+<span class="lineNum">     531 </span>            :     {
+<span class="lineNum">     532 </span><span class="lineNoCov">          0 :       free (tmpname);</span>
+<span class="lineNum">     533 </span><span class="lineNoCov">          0 :       return NULL;</span>
+<span class="lineNum">     534 </span>            :     }
+<span class="lineNum">     535 </span><span class="lineNoCov">          0 :   close (fd);</span>
+<span class="lineNum">     536 </span><span class="lineNoCov">          0 :   return tmpname;</span>
+<span class="lineNum">     537 </span>            : }
+<span class="lineNum">     538 </span>            : 
+<span class="lineNum">     539 </span>            : /* Return the name of a created temporary directory inside the
+<span class="lineNum">     540 </span>            :    directory containing FILENAME.  */
+<a name="541"><span class="lineNum">     541 </span>            : </a>
+<span class="lineNum">     542 </span>            : char *
+<span class="lineNum">     543 </span><span class="lineNoCov">          0 : make_tempdir (char *filename)</span>
+<span class="lineNum">     544 </span>            : {
+<span class="lineNum">     545 </span><span class="lineNoCov">          0 :   char *tmpname = template_in_dir (filename);</span>
+<span class="lineNum">     546 </span>            : 
+<span class="lineNum">     547 </span>            : #ifdef HAVE_MKDTEMP
+<span class="lineNum">     548 </span><span class="lineNoCov">          0 :   return mkdtemp (tmpname);</span>
+<span class="lineNum">     549 </span>            : #else
+<span class="lineNum">     550 </span>            :   tmpname = mktemp (tmpname);
+<span class="lineNum">     551 </span>            :   if (tmpname == NULL)
+<span class="lineNum">     552 </span>            :     return NULL;
+<span class="lineNum">     553 </span>            : #if defined (_WIN32) &amp;&amp; !defined (__CYGWIN32__)
+<span class="lineNum">     554 </span>            :   if (mkdir (tmpname) != 0)
+<span class="lineNum">     555 </span>            :     return NULL;
+<span class="lineNum">     556 </span>            : #else
+<span class="lineNum">     557 </span>            :   if (mkdir (tmpname, 0700) != 0)
+<span class="lineNum">     558 </span>            :     return NULL;
+<span class="lineNum">     559 </span>            : #endif
+<span class="lineNum">     560 </span>            :   return tmpname;
+<span class="lineNum">     561 </span>            : #endif
+<span class="lineNum">     562 </span>            : }
+<span class="lineNum">     563 </span>            : 
+<span class="lineNum">     564 </span>            : /* Parse a string into a VMA, with a fatal error if it can't be
+<span class="lineNum">     565 </span>            :    parsed.  */
+<a name="566"><span class="lineNum">     566 </span>            : </a>
+<span class="lineNum">     567 </span>            : bfd_vma
+<span class="lineNum">     568 </span><span class="lineNoCov">          0 : parse_vma (const char *s, const char *arg)</span>
+<span class="lineNum">     569 </span>            : {
+<span class="lineNum">     570 </span>            :   bfd_vma ret;
+<span class="lineNum">     571 </span>            :   const char *end;
+<span class="lineNum">     572 </span>            : 
+<span class="lineNum">     573 </span><span class="lineNoCov">          0 :   ret = bfd_scan_vma (s, &amp;end, 0);</span>
+<span class="lineNum">     574 </span>            : 
+<span class="lineNum">     575 </span><span class="lineNoCov">          0 :   if (*end != '\0')</span>
+<span class="lineNum">     576 </span><span class="lineNoCov">          0 :     fatal (_(&quot;%s: bad number: %s&quot;), arg, s);</span>
+<span class="lineNum">     577 </span>            : 
+<span class="lineNum">     578 </span><span class="lineNoCov">          0 :   return ret;</span>
+<span class="lineNum">     579 </span>            : }
+<span class="lineNum">     580 </span>            : 
+<span class="lineNum">     581 </span>            : /* Returns the size of the named file.  If the file does not
+<span class="lineNum">     582 </span>            :    exist, or if it is not a real file, then a suitable non-fatal
+<span class="lineNum">     583 </span>            :    error message is printed and (off_t) -1 is returned.  */
+<a name="584"><span class="lineNum">     584 </span>            : </a>
+<span class="lineNum">     585 </span>            : off_t
+<span class="lineNum">     586 </span><span class="lineCov">         82 : get_file_size (const char * file_name)</span>
+<span class="lineNum">     587 </span>            : {
+<span class="lineNum">     588 </span>            :   struct stat statbuf;
+<span class="lineNum">     589 </span>            : 
+<span class="lineNum">     590 </span><span class="lineCov">         82 :   if (file_name == NULL)</span>
+<span class="lineNum">     591 </span>            :     return (off_t) -1;
+<span class="lineNum">     592 </span>            : 
+<span class="lineNum">     593 </span><span class="lineCov">         82 :   if (stat (file_name, &amp;statbuf) &lt; 0)</span>
+<span class="lineNum">     594 </span>            :     {
+<span class="lineNum">     595 </span><span class="lineNoCov">          0 :       if (errno == ENOENT)</span>
+<span class="lineNum">     596 </span><span class="lineNoCov">          0 :         non_fatal (_(&quot;'%s': No such file&quot;), file_name);</span>
+<span class="lineNum">     597 </span>            :       else
+<span class="lineNum">     598 </span><span class="lineNoCov">          0 :         non_fatal (_(&quot;Warning: could not locate '%s'.  reason: %s&quot;),</span>
+<span class="lineNum">     599 </span>            :                    file_name, strerror (errno));
+<span class="lineNum">     600 </span>            :     }
+<span class="lineNum">     601 </span><span class="lineCov">         82 :   else if (S_ISDIR (statbuf.st_mode))</span>
+<span class="lineNum">     602 </span><span class="lineNoCov">          0 :     non_fatal (_(&quot;Warning: '%s' is a directory&quot;), file_name);</span>
+<span class="lineNum">     603 </span><span class="lineCov">         82 :   else if (! S_ISREG (statbuf.st_mode))</span>
+<span class="lineNum">     604 </span><span class="lineNoCov">          0 :     non_fatal (_(&quot;Warning: '%s' is not an ordinary file&quot;), file_name);</span>
+<span class="lineNum">     605 </span><span class="lineCov">         82 :   else if (statbuf.st_size &lt; 0)</span>
+<span class="lineNum">     606 </span><span class="lineNoCov">          0 :     non_fatal (_(&quot;Warning: '%s' has negative size, probably it is too large&quot;),</span>
+<span class="lineNum">     607 </span>            :                file_name);
+<span class="lineNum">     608 </span>            :   else
+<span class="lineNum">     609 </span>            :     return statbuf.st_size;
+<span class="lineNum">     610 </span>            : 
+<span class="lineNum">     611 </span>            :   return (off_t) -1;
+<span class="lineNum">     612 </span>            : }
+<span class="lineNum">     613 </span>            : 
+<span class="lineNum">     614 </span>            : /* Return the filename in a static buffer.  */
+<a name="615"><span class="lineNum">     615 </span>            : </a>
+<span class="lineNum">     616 </span>            : const char *
+<span class="lineNum">     617 </span><span class="lineNoCov">          0 : bfd_get_archive_filename (const bfd *abfd)</span>
+<span class="lineNum">     618 </span>            : {
+<span class="lineNum">     619 </span>            :   static size_t curr = 0;
+<span class="lineNum">     620 </span>            :   static char *buf;
+<span class="lineNum">     621 </span>            :   size_t needed;
+<span class="lineNum">     622 </span>            : 
+<span class="lineNum">     623 </span><span class="lineNoCov">          0 :   assert (abfd != NULL);</span>
+<span class="lineNum">     624 </span>            : 
+<span class="lineNum">     625 </span><span class="lineNoCov">          0 :   if (abfd-&gt;my_archive == NULL</span>
+<span class="lineNum">     626 </span><span class="lineNoCov">          0 :       || bfd_is_thin_archive (abfd-&gt;my_archive))</span>
+<span class="lineNum">     627 </span><span class="lineNoCov">          0 :     return bfd_get_filename (abfd);</span>
+<span class="lineNum">     628 </span>            : 
+<span class="lineNum">     629 </span><span class="lineNoCov">          0 :   needed = (strlen (bfd_get_filename (abfd-&gt;my_archive))</span>
+<span class="lineNum">     630 </span><span class="lineNoCov">          0 :             + strlen (bfd_get_filename (abfd)) + 3);</span>
+<span class="lineNum">     631 </span><span class="lineNoCov">          0 :   if (needed &gt; curr)</span>
+<span class="lineNum">     632 </span>            :     {
+<span class="lineNum">     633 </span><span class="lineNoCov">          0 :       if (curr)</span>
+<span class="lineNum">     634 </span><span class="lineNoCov">          0 :         free (buf);</span>
+<span class="lineNum">     635 </span><span class="lineNoCov">          0 :       curr = needed + (needed &gt;&gt; 1);</span>
+<span class="lineNum">     636 </span><span class="lineNoCov">          0 :       buf = (char *) xmalloc (curr);</span>
+<span class="lineNum">     637 </span>            :     }
+<span class="lineNum">     638 </span><span class="lineNoCov">          0 :   sprintf (buf, &quot;%s(%s)&quot;, bfd_get_filename (abfd-&gt;my_archive),</span>
+<span class="lineNum">     639 </span><span class="lineNoCov">          0 :            bfd_get_filename (abfd));</span>
+<span class="lineNum">     640 </span><span class="lineNoCov">          0 :   return buf;</span>
+<span class="lineNum">     641 </span>            : }
+<span class="lineNum">     642 </span>            : 
+<span class="lineNum">     643 </span>            : /* Returns TRUE iff PATHNAME, a filename of an archive member,
+<span class="lineNum">     644 </span>            :    is valid for writing.  For security reasons absolute paths
+<span class="lineNum">     645 </span>            :    and paths containing /../ are not allowed.  See PR 17533.  */
+<a name="646"><span class="lineNum">     646 </span>            : </a>
+<span class="lineNum">     647 </span>            : bfd_boolean
+<span class="lineNum">     648 </span><span class="lineNoCov">          0 : is_valid_archive_path (char const * pathname)</span>
+<span class="lineNum">     649 </span>            : {
+<span class="lineNum">     650 </span><span class="lineNoCov">          0 :   const char * n = pathname;</span>
+<span class="lineNum">     651 </span>            : 
+<span class="lineNum">     652 </span><span class="lineNoCov">          0 :   if (IS_ABSOLUTE_PATH (n))</span>
+<span class="lineNum">     653 </span>            :     return FALSE;
+<span class="lineNum">     654 </span>            : 
+<span class="lineNum">     655 </span><span class="lineNoCov">          0 :   while (*n)</span>
+<span class="lineNum">     656 </span>            :     {
+<span class="lineNum">     657 </span><span class="lineNoCov">          0 :       if (*n == '.' &amp;&amp; *++n == '.' &amp;&amp; ( ! *++n || IS_DIR_SEPARATOR (*n)))</span>
+<span class="lineNum">     658 </span>            :         return FALSE;
+<span class="lineNum">     659 </span>            : 
+<span class="lineNum">     660 </span><span class="lineNoCov">          0 :       while (*n &amp;&amp; ! IS_DIR_SEPARATOR (*n))</span>
+<span class="lineNum">     661 </span><span class="lineNoCov">          0 :         n++;</span>
+<span class="lineNum">     662 </span><span class="lineNoCov">          0 :       while (IS_DIR_SEPARATOR (*n))</span>
+<span class="lineNum">     663 </span><span class="lineNoCov">          0 :         n++;</span>
+<span class="lineNum">     664 </span>            :     }
+<span class="lineNum">     665 </span>            : 
+<span class="lineNum">     666 </span>            :   return TRUE;
+<span class="lineNum">     667 </span>            : }
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13-14-ga5dd952</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

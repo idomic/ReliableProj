@@ -1,0 +1,1405 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - app.info - /usr/include/x86_64-linux-gnu/bits/string2.h</title>
+  <link rel="stylesheet" type="text/css" href="../../../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../../../index.html">top level</a> - <a href="index.html">usr/include/x86_64-linux-gnu/bits</a> - string2.h<span style="font-size: 80%;"> (source / <a href="string2.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">app.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">5</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2018-04-30 19:41:15</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntryHi">-</td>
+          </tr>
+          <tr><td><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /* Machine-independant string function optimizations.</a>
+<span class="lineNum">       2 </span>            :    Copyright (C) 1997-2016 Free Software Foundation, Inc.
+<span class="lineNum">       3 </span>            :    This file is part of the GNU C Library.
+<span class="lineNum">       4 </span>            :    Contributed by Ulrich Drepper &lt;drepper@cygnus.com&gt;, 1997.
+<span class="lineNum">       5 </span>            : 
+<span class="lineNum">       6 </span>            :    The GNU C Library is free software; you can redistribute it and/or
+<span class="lineNum">       7 </span>            :    modify it under the terms of the GNU Lesser General Public
+<span class="lineNum">       8 </span>            :    License as published by the Free Software Foundation; either
+<span class="lineNum">       9 </span>            :    version 2.1 of the License, or (at your option) any later version.
+<span class="lineNum">      10 </span>            : 
+<span class="lineNum">      11 </span>            :    The GNU C Library is distributed in the hope that it will be useful,
+<span class="lineNum">      12 </span>            :    but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      13 </span>            :    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+<span class="lineNum">      14 </span>            :    Lesser General Public License for more details.
+<span class="lineNum">      15 </span>            : 
+<span class="lineNum">      16 </span>            :    You should have received a copy of the GNU Lesser General Public
+<span class="lineNum">      17 </span>            :    License along with the GNU C Library; if not, see
+<span class="lineNum">      18 </span>            :    &lt;http://www.gnu.org/licenses/&gt;.  */
+<span class="lineNum">      19 </span>            : 
+<span class="lineNum">      20 </span>            : #ifndef _STRING_H
+<span class="lineNum">      21 </span>            : # error &quot;Never use &lt;bits/string2.h&gt; directly; include &lt;string.h&gt; instead.&quot;
+<span class="lineNum">      22 </span>            : #endif
+<span class="lineNum">      23 </span>            : 
+<span class="lineNum">      24 </span>            : #ifndef __NO_STRING_INLINES
+<span class="lineNum">      25 </span>            : 
+<span class="lineNum">      26 </span>            : /* Unlike the definitions in the header &lt;bits/string.h&gt; the
+<span class="lineNum">      27 </span>            :    definitions contained here are not optimized down to assembler
+<span class="lineNum">      28 </span>            :    level.  Those optimizations are not always a good idea since this
+<span class="lineNum">      29 </span>            :    means the code size increases a lot.  Instead the definitions here
+<span class="lineNum">      30 </span>            :    optimize some functions in a way which do not dramatically
+<span class="lineNum">      31 </span>            :    increase the code size and which do not use assembler.  The main
+<span class="lineNum">      32 </span>            :    trick is to use GCC's `__builtin_constant_p' function.
+<span class="lineNum">      33 </span>            : 
+<span class="lineNum">      34 </span>            :    Every function XXX which has a defined version in
+<span class="lineNum">      35 </span>            :    &lt;bits/string.h&gt; must be accompanied by a symbol _HAVE_STRING_ARCH_XXX
+<span class="lineNum">      36 </span>            :    to make sure we don't get redefinitions.
+<span class="lineNum">      37 </span>            : 
+<span class="lineNum">      38 </span>            :    We must use here macros instead of inline functions since the
+<span class="lineNum">      39 </span>            :    trick won't work with the latter.  */
+<span class="lineNum">      40 </span>            : 
+<span class="lineNum">      41 </span>            : #ifndef __STRING_INLINE
+<span class="lineNum">      42 </span>            : # ifdef __cplusplus
+<span class="lineNum">      43 </span>            : #  define __STRING_INLINE inline
+<span class="lineNum">      44 </span>            : # else
+<span class="lineNum">      45 </span>            : #  define __STRING_INLINE __extern_inline
+<span class="lineNum">      46 </span>            : # endif
+<span class="lineNum">      47 </span>            : #endif
+<span class="lineNum">      48 </span>            : 
+<span class="lineNum">      49 </span>            : #if _STRING_INLINE_unaligned
+<span class="lineNum">      50 </span>            : /* If we can do unaligned memory accesses we must know the endianess.  */
+<span class="lineNum">      51 </span>            : # include &lt;endian.h&gt;
+<span class="lineNum">      52 </span>            : # include &lt;bits/types.h&gt;
+<span class="lineNum">      53 </span>            : 
+<span class="lineNum">      54 </span>            : # if __BYTE_ORDER == __LITTLE_ENDIAN
+<span class="lineNum">      55 </span>            : #  define __STRING2_SMALL_GET16(src, idx) \
+<span class="lineNum">      56 </span>            :      (((const unsigned char *) (const char *) (src))[idx + 1] &lt;&lt; 8              \
+<span class="lineNum">      57 </span>            :       | ((const unsigned char *) (const char *) (src))[idx])
+<span class="lineNum">      58 </span>            : #  define __STRING2_SMALL_GET32(src, idx) \
+<span class="lineNum">      59 </span>            :      (((((const unsigned char *) (const char *) (src))[idx + 3] &lt;&lt; 8            \
+<span class="lineNum">      60 </span>            :         | ((const unsigned char *) (const char *) (src))[idx + 2]) &lt;&lt; 8         \
+<span class="lineNum">      61 </span>            :        | ((const unsigned char *) (const char *) (src))[idx + 1]) &lt;&lt; 8          \
+<span class="lineNum">      62 </span>            :       | ((const unsigned char *) (const char *) (src))[idx])
+<span class="lineNum">      63 </span>            : # else
+<span class="lineNum">      64 </span>            : #  define __STRING2_SMALL_GET16(src, idx) \
+<span class="lineNum">      65 </span>            :      (((const unsigned char *) (const char *) (src))[idx] &lt;&lt; 8                  \
+<span class="lineNum">      66 </span>            :       | ((const unsigned char *) (const char *) (src))[idx + 1])
+<span class="lineNum">      67 </span>            : #  define __STRING2_SMALL_GET32(src, idx) \
+<span class="lineNum">      68 </span>            :      (((((const unsigned char *) (const char *) (src))[idx] &lt;&lt; 8        \
+<span class="lineNum">      69 </span>            :         | ((const unsigned char *) (const char *) (src))[idx + 1]) &lt;&lt; 8         \
+<span class="lineNum">      70 </span>            :        | ((const unsigned char *) (const char *) (src))[idx + 2]) &lt;&lt; 8          \
+<span class="lineNum">      71 </span>            :       | ((const unsigned char *) (const char *) (src))[idx + 3])
+<span class="lineNum">      72 </span>            : # endif
+<span class="lineNum">      73 </span>            : #else
+<span class="lineNum">      74 </span>            : /* These are a few types we need for the optimizations if we cannot
+<span class="lineNum">      75 </span>            :    use unaligned memory accesses.  */
+<span class="lineNum">      76 </span>            : # define __STRING2_COPY_TYPE(N) \
+<span class="lineNum">      77 </span>            :   typedef struct { unsigned char __arr[N]; }                                  \
+<span class="lineNum">      78 </span>            :     __attribute__ ((__packed__)) __STRING2_COPY_ARR##N
+<span class="lineNum">      79 </span>            : __STRING2_COPY_TYPE (2);
+<span class="lineNum">      80 </span>            : __STRING2_COPY_TYPE (3);
+<span class="lineNum">      81 </span>            : __STRING2_COPY_TYPE (4);
+<span class="lineNum">      82 </span>            : __STRING2_COPY_TYPE (5);
+<span class="lineNum">      83 </span>            : __STRING2_COPY_TYPE (6);
+<span class="lineNum">      84 </span>            : __STRING2_COPY_TYPE (7);
+<span class="lineNum">      85 </span>            : __STRING2_COPY_TYPE (8);
+<span class="lineNum">      86 </span>            : # undef __STRING2_COPY_TYPE
+<span class="lineNum">      87 </span>            : #endif
+<span class="lineNum">      88 </span>            : 
+<span class="lineNum">      89 </span>            : /* Dereferencing a pointer arg to run sizeof on it fails for the void
+<span class="lineNum">      90 </span>            :    pointer case, so we use this instead.
+<span class="lineNum">      91 </span>            :    Note that __x is evaluated twice. */
+<span class="lineNum">      92 </span>            : #define __string2_1bptr_p(__x) \
+<span class="lineNum">      93 </span>            :   ((size_t)(const void *)((__x) + 1) - (size_t)(const void *)(__x) == 1)
+<span class="lineNum">      94 </span>            : 
+<span class="lineNum">      95 </span>            : /* Set N bytes of S to C.  */
+<span class="lineNum">      96 </span>            : #if !defined _HAVE_STRING_ARCH_memset
+<span class="lineNum">      97 </span>            : # if !__GNUC_PREREQ (3, 0)
+<span class="lineNum">      98 </span>            : #  if _STRING_INLINE_unaligned
+<span class="lineNum">      99 </span>            : #   define memset(s, c, n) \
+<span class="lineNum">     100 </span>            :   (__extension__ (__builtin_constant_p (n) &amp;&amp; (n) &lt;= 16                            \
+<span class="lineNum">     101 </span>            :                   ? ((n) == 1                                                 \
+<span class="lineNum">     102 </span>            :                      ? __memset_1 (s, c)                                      \
+<span class="lineNum">     103 </span>            :                      : __memset_gc (s, c, n))                                 \
+<span class="lineNum">     104 </span>            :                   : (__builtin_constant_p (c) &amp;&amp; (c) == '\0'                  \
+<span class="lineNum">     105 </span>            :                      ? ({ void *__s = (s); __bzero (__s, n); __s; })          \
+<span class="lineNum">     106 </span>            :                      : memset (s, c, n))))
+<span class="lineNum">     107 </span>            : 
+<span class="lineNum">     108 </span>            : #   define __memset_1(s, c) ({ void *__s = (s);                               \
+<span class="lineNum">     109 </span>            :                             *((__uint8_t *) __s) = (__uint8_t) c; __s; })
+<span class="lineNum">     110 </span>            : 
+<span class="lineNum">     111 </span>            : #   define __memset_gc(s, c, n) \
+<span class="lineNum">     112 </span>            :   ({ void *__s = (s);                                                         \
+<span class="lineNum">     113 </span>            :      union {                                                                  \
+<span class="lineNum">     114 </span>            :        unsigned int __ui;                                                     \
+<span class="lineNum">     115 </span>            :        unsigned short int __usi;                                              \
+<span class="lineNum">     116 </span>            :        unsigned char __uc;                                                    \
+<span class="lineNum">     117 </span>            :      } *__u = __s;                                                            \
+<span class="lineNum">     118 </span>            :      __uint8_t __c = (__uint8_t) (c);                                         \
+<span class="lineNum">     119 </span>            :                                                                               \
+<span class="lineNum">     120 </span>            :      /* This `switch' statement will be removed at compile-time.  */          \
+<span class="lineNum">     121 </span>            :      switch ((unsigned int) (n))                                              \
+<span class="lineNum">     122 </span>            :        {                                                                      \
+<span class="lineNum">     123 </span>            :        case 15:                                                               \
+<span class="lineNum">     124 </span>            :          __u-&gt;__ui = __c * 0x01010101;                                             \
+<span class="lineNum">     125 </span>            :          __u = __extension__ ((void *) __u + 4);                              \
+<span class="lineNum">     126 </span>            :        case 11:                                                               \
+<span class="lineNum">     127 </span>            :          __u-&gt;__ui = __c * 0x01010101;                                             \
+<span class="lineNum">     128 </span>            :          __u = __extension__ ((void *) __u + 4);                              \
+<span class="lineNum">     129 </span>            :        case 7:                                                                \
+<span class="lineNum">     130 </span>            :          __u-&gt;__ui = __c * 0x01010101;                                             \
+<span class="lineNum">     131 </span>            :          __u = __extension__ ((void *) __u + 4);                              \
+<span class="lineNum">     132 </span>            :        case 3:                                                                \
+<span class="lineNum">     133 </span>            :          __u-&gt;__usi = (unsigned short int) __c * 0x0101;                   \
+<span class="lineNum">     134 </span>            :          __u = __extension__ ((void *) __u + 2);                              \
+<span class="lineNum">     135 </span>            :          __u-&gt;__uc = (unsigned char) __c;                                  \
+<span class="lineNum">     136 </span>            :          break;                                                               \
+<span class="lineNum">     137 </span>            :                                                                               \
+<span class="lineNum">     138 </span>            :        case 14:                                                               \
+<span class="lineNum">     139 </span>            :          __u-&gt;__ui = __c * 0x01010101;                                             \
+<span class="lineNum">     140 </span>            :          __u = __extension__ ((void *) __u + 4);                              \
+<span class="lineNum">     141 </span>            :        case 10:                                                               \
+<span class="lineNum">     142 </span>            :          __u-&gt;__ui = __c * 0x01010101;                                             \
+<span class="lineNum">     143 </span>            :          __u = __extension__ ((void *) __u + 4);                              \
+<span class="lineNum">     144 </span>            :        case 6:                                                                \
+<span class="lineNum">     145 </span>            :          __u-&gt;__ui = __c * 0x01010101;                                             \
+<span class="lineNum">     146 </span>            :          __u = __extension__ ((void *) __u + 4);                              \
+<span class="lineNum">     147 </span>            :        case 2:                                                                \
+<span class="lineNum">     148 </span>            :          __u-&gt;__usi = (unsigned short int) __c * 0x0101;                   \
+<span class="lineNum">     149 </span>            :          break;                                                               \
+<span class="lineNum">     150 </span>            :                                                                               \
+<span class="lineNum">     151 </span>            :        case 13:                                                               \
+<span class="lineNum">     152 </span>            :          __u-&gt;__ui = __c * 0x01010101;                                             \
+<span class="lineNum">     153 </span>            :          __u = __extension__ ((void *) __u + 4);                              \
+<span class="lineNum">     154 </span>            :        case 9:                                                                \
+<span class="lineNum">     155 </span>            :          __u-&gt;__ui = __c * 0x01010101;                                             \
+<span class="lineNum">     156 </span>            :          __u = __extension__ ((void *) __u + 4);                              \
+<span class="lineNum">     157 </span>            :        case 5:                                                                \
+<span class="lineNum">     158 </span>            :          __u-&gt;__ui = __c * 0x01010101;                                             \
+<span class="lineNum">     159 </span>            :          __u = __extension__ ((void *) __u + 4);                              \
+<span class="lineNum">     160 </span>            :        case 1:                                                                \
+<span class="lineNum">     161 </span>            :          __u-&gt;__uc = (unsigned char) __c;                                  \
+<span class="lineNum">     162 </span>            :          break;                                                               \
+<span class="lineNum">     163 </span>            :                                                                               \
+<span class="lineNum">     164 </span>            :        case 16:                                                               \
+<span class="lineNum">     165 </span>            :          __u-&gt;__ui = __c * 0x01010101;                                             \
+<span class="lineNum">     166 </span>            :          __u = __extension__ ((void *) __u + 4);                              \
+<span class="lineNum">     167 </span>            :        case 12:                                                               \
+<span class="lineNum">     168 </span>            :          __u-&gt;__ui = __c * 0x01010101;                                             \
+<span class="lineNum">     169 </span>            :          __u = __extension__ ((void *) __u + 4);                              \
+<span class="lineNum">     170 </span>            :        case 8:                                                                \
+<span class="lineNum">     171 </span>            :          __u-&gt;__ui = __c * 0x01010101;                                             \
+<span class="lineNum">     172 </span>            :          __u = __extension__ ((void *) __u + 4);                              \
+<span class="lineNum">     173 </span>            :        case 4:                                                                \
+<span class="lineNum">     174 </span>            :          __u-&gt;__ui = __c * 0x01010101;                                             \
+<span class="lineNum">     175 </span>            :        case 0:                                                                \
+<span class="lineNum">     176 </span>            :          break;                                                               \
+<span class="lineNum">     177 </span>            :        }                                                                      \
+<span class="lineNum">     178 </span>            :                                                                               \
+<span class="lineNum">     179 </span>            :      __s; })
+<span class="lineNum">     180 </span>            : #  else
+<span class="lineNum">     181 </span>            : #   define memset(s, c, n) \
+<span class="lineNum">     182 </span>            :   (__extension__ (__builtin_constant_p (c) &amp;&amp; (c) == '\0'                     \
+<span class="lineNum">     183 </span>            :                   ? ({ void *__s = (s); __bzero (__s, n); __s; })             \
+<span class="lineNum">     184 </span>            :                   : memset (s, c, n)))
+<span class="lineNum">     185 </span>            : #  endif
+<span class="lineNum">     186 </span>            : # endif
+<span class="lineNum">     187 </span>            : 
+<span class="lineNum">     188 </span>            : /* GCC &lt; 3.0 optimizes memset(s, 0, n) but not bzero(s, n).
+<span class="lineNum">     189 </span>            :    The optimization is broken before EGCS 1.1.
+<span class="lineNum">     190 </span>            :    GCC 3.0+ has __builtin_bzero as well, but at least till GCC 3.4
+<span class="lineNum">     191 </span>            :    if it decides to call the library function, it calls memset
+<span class="lineNum">     192 </span>            :    and not bzero.  */
+<span class="lineNum">     193 </span>            : # if __GNUC_PREREQ (2, 91)
+<span class="lineNum">     194 </span>            : #  define __bzero(s, n) __builtin_memset (s, '\0', n)
+<span class="lineNum">     195 </span>            : # endif
+<span class="lineNum">     196 </span>            : 
+<span class="lineNum">     197 </span>            : #endif
+<span class="lineNum">     198 </span>            : 
+<span class="lineNum">     199 </span>            : 
+<span class="lineNum">     200 </span>            : /* Copy N bytes from SRC to DEST, returning pointer to byte following the
+<span class="lineNum">     201 </span>            :    last copied.  */
+<span class="lineNum">     202 </span>            : #ifdef __USE_GNU
+<span class="lineNum">     203 </span>            : # if !defined _HAVE_STRING_ARCH_mempcpy || defined _FORCE_INLINES
+<span class="lineNum">     204 </span>            : #  ifndef _HAVE_STRING_ARCH_mempcpy
+<span class="lineNum">     205 </span>            : #   if __GNUC_PREREQ (3, 4)
+<span class="lineNum">     206 </span>            : #    define __mempcpy(dest, src, n) __builtin_mempcpy (dest, src, n)
+<span class="lineNum">     207 </span>            : #   elif __GNUC_PREREQ (3, 0)
+<span class="lineNum">     208 </span>            : #    define __mempcpy(dest, src, n) \
+<span class="lineNum">     209 </span>            :   (__extension__ (__builtin_constant_p (src) &amp;&amp; __builtin_constant_p (n)      \
+<span class="lineNum">     210 </span>            :                   &amp;&amp; __string2_1bptr_p (src) &amp;&amp; n &lt;= 8                             \
+<span class="lineNum">     211 </span>            :                   ? __builtin_memcpy (dest, src, n) + (n)                     \
+<span class="lineNum">     212 </span>            :                   : __mempcpy (dest, src, n)))
+<span class="lineNum">     213 </span>            : #   else
+<span class="lineNum">     214 </span>            : #    define __mempcpy(dest, src, n) \
+<span class="lineNum">     215 </span>            :   (__extension__ (__builtin_constant_p (src) &amp;&amp; __builtin_constant_p (n)      \
+<span class="lineNum">     216 </span>            :                   &amp;&amp; __string2_1bptr_p (src) &amp;&amp; n &lt;= 8                             \
+<span class="lineNum">     217 </span>            :                   ? __mempcpy_small (dest, __mempcpy_args (src), n)           \
+<span class="lineNum">     218 </span>            :                   : __mempcpy (dest, src, n)))
+<span class="lineNum">     219 </span>            : #   endif
+<span class="lineNum">     220 </span>            : /* In glibc we use this function frequently but for namespace reasons
+<span class="lineNum">     221 </span>            :    we have to use the name `__mempcpy'.  */
+<span class="lineNum">     222 </span>            : #   define mempcpy(dest, src, n) __mempcpy (dest, src, n)
+<span class="lineNum">     223 </span>            : #  endif
+<span class="lineNum">     224 </span>            : 
+<span class="lineNum">     225 </span>            : #  if !__GNUC_PREREQ (3, 0) || defined _FORCE_INLINES
+<span class="lineNum">     226 </span>            : #   if _STRING_INLINE_unaligned
+<span class="lineNum">     227 </span>            : #    ifndef _FORCE_INLINES
+<span class="lineNum">     228 </span>            : #     define __mempcpy_args(src) \
+<span class="lineNum">     229 </span>            :      ((const char *) (src))[0], ((const char *) (src))[2],                    \
+<span class="lineNum">     230 </span>            :      ((const char *) (src))[4], ((const char *) (src))[6],                    \
+<span class="lineNum">     231 </span>            :      __extension__ __STRING2_SMALL_GET16 (src, 0),                            \
+<span class="lineNum">     232 </span>            :      __extension__ __STRING2_SMALL_GET16 (src, 4),                            \
+<span class="lineNum">     233 </span>            :      __extension__ __STRING2_SMALL_GET32 (src, 0),                            \
+<span class="lineNum">     234 </span>            :      __extension__ __STRING2_SMALL_GET32 (src, 4)
+<span class="lineNum">     235 </span>            : #    endif
+<span class="lineNum">     236 </span>            : __STRING_INLINE void *__mempcpy_small (void *, char, char, char, char,
+<span class="lineNum">     237 </span>            :                                        __uint16_t, __uint16_t, __uint32_t,
+<span class="lineNum">     238 </span>            :                                        __uint32_t, size_t);
+<span class="lineNum">     239 </span>            : __STRING_INLINE void *
+<span class="lineNum">     240 </span>            : __mempcpy_small (void *__dest1,
+<span class="lineNum">     241 </span>            :                  char __src0_1, char __src2_1, char __src4_1, char __src6_1,
+<span class="lineNum">     242 </span>            :                  __uint16_t __src0_2, __uint16_t __src4_2,
+<span class="lineNum">     243 </span>            :                  __uint32_t __src0_4, __uint32_t __src4_4,
+<span class="lineNum">     244 </span>            :                  size_t __srclen)
+<span class="lineNum">     245 </span>            : {
+<span class="lineNum">     246 </span>            :   union {
+<span class="lineNum">     247 </span>            :     __uint32_t __ui;
+<span class="lineNum">     248 </span>            :     __uint16_t __usi;
+<span class="lineNum">     249 </span>            :     unsigned char __uc;
+<span class="lineNum">     250 </span>            :     unsigned char __c;
+<span class="lineNum">     251 </span>            :   } *__u = __dest1;
+<span class="lineNum">     252 </span>            :   switch ((unsigned int) __srclen)
+<span class="lineNum">     253 </span>            :     {
+<span class="lineNum">     254 </span>            :     case 1:
+<span class="lineNum">     255 </span>            :       __u-&gt;__c = __src0_1;
+<span class="lineNum">     256 </span>            :       __u = __extension__ ((void *) __u + 1);
+<span class="lineNum">     257 </span>            :       break;
+<span class="lineNum">     258 </span>            :     case 2:
+<span class="lineNum">     259 </span>            :       __u-&gt;__usi = __src0_2;
+<span class="lineNum">     260 </span>            :       __u = __extension__ ((void *) __u + 2);
+<span class="lineNum">     261 </span>            :       break;
+<span class="lineNum">     262 </span>            :     case 3:
+<span class="lineNum">     263 </span>            :       __u-&gt;__usi = __src0_2;
+<span class="lineNum">     264 </span>            :       __u = __extension__ ((void *) __u + 2);
+<span class="lineNum">     265 </span>            :       __u-&gt;__c = __src2_1;
+<span class="lineNum">     266 </span>            :       __u = __extension__ ((void *) __u + 1);
+<span class="lineNum">     267 </span>            :       break;
+<span class="lineNum">     268 </span>            :     case 4:
+<span class="lineNum">     269 </span>            :       __u-&gt;__ui = __src0_4;
+<span class="lineNum">     270 </span>            :       __u = __extension__ ((void *) __u + 4);
+<span class="lineNum">     271 </span>            :       break;
+<span class="lineNum">     272 </span>            :     case 5:
+<span class="lineNum">     273 </span>            :       __u-&gt;__ui = __src0_4;
+<span class="lineNum">     274 </span>            :       __u = __extension__ ((void *) __u + 4);
+<span class="lineNum">     275 </span>            :       __u-&gt;__c = __src4_1;
+<span class="lineNum">     276 </span>            :       __u = __extension__ ((void *) __u + 1);
+<span class="lineNum">     277 </span>            :       break;
+<span class="lineNum">     278 </span>            :     case 6:
+<span class="lineNum">     279 </span>            :       __u-&gt;__ui = __src0_4;
+<span class="lineNum">     280 </span>            :       __u = __extension__ ((void *) __u + 4);
+<span class="lineNum">     281 </span>            :       __u-&gt;__usi = __src4_2;
+<span class="lineNum">     282 </span>            :       __u = __extension__ ((void *) __u + 2);
+<span class="lineNum">     283 </span>            :       break;
+<span class="lineNum">     284 </span>            :     case 7:
+<span class="lineNum">     285 </span>            :       __u-&gt;__ui = __src0_4;
+<span class="lineNum">     286 </span>            :       __u = __extension__ ((void *) __u + 4);
+<span class="lineNum">     287 </span>            :       __u-&gt;__usi = __src4_2;
+<span class="lineNum">     288 </span>            :       __u = __extension__ ((void *) __u + 2);
+<span class="lineNum">     289 </span>            :       __u-&gt;__c = __src6_1;
+<span class="lineNum">     290 </span>            :       __u = __extension__ ((void *) __u + 1);
+<span class="lineNum">     291 </span>            :       break;
+<span class="lineNum">     292 </span>            :     case 8:
+<span class="lineNum">     293 </span>            :       __u-&gt;__ui = __src0_4;
+<span class="lineNum">     294 </span>            :       __u = __extension__ ((void *) __u + 4);
+<span class="lineNum">     295 </span>            :       __u-&gt;__ui = __src4_4;
+<span class="lineNum">     296 </span>            :       __u = __extension__ ((void *) __u + 4);
+<span class="lineNum">     297 </span>            :       break;
+<span class="lineNum">     298 </span>            :     }
+<span class="lineNum">     299 </span>            :   return (void *) __u;
+<span class="lineNum">     300 </span>            : }
+<span class="lineNum">     301 </span>            : #   else
+<span class="lineNum">     302 </span>            : #    ifndef _FORCE_INLINES
+<span class="lineNum">     303 </span>            : #     define __mempcpy_args(src) \
+<span class="lineNum">     304 </span>            :      ((const char *) (src))[0],                                               \
+<span class="lineNum">     305 </span>            :      __extension__ ((__STRING2_COPY_ARR2)                                     \
+<span class="lineNum">     306 </span>            :       { { ((const char *) (src))[0], ((const char *) (src))[1] } }),          \
+<span class="lineNum">     307 </span>            :      __extension__ ((__STRING2_COPY_ARR3)                                     \
+<span class="lineNum">     308 </span>            :       { { ((const char *) (src))[0], ((const char *) (src))[1],               \
+<span class="lineNum">     309 </span>            :           ((const char *) (src))[2] } }),                                     \
+<span class="lineNum">     310 </span>            :      __extension__ ((__STRING2_COPY_ARR4)                                     \
+<span class="lineNum">     311 </span>            :       { { ((const char *) (src))[0], ((const char *) (src))[1],               \
+<span class="lineNum">     312 </span>            :           ((const char *) (src))[2], ((const char *) (src))[3] } }),          \
+<span class="lineNum">     313 </span>            :      __extension__ ((__STRING2_COPY_ARR5)                                     \
+<span class="lineNum">     314 </span>            :       { { ((const char *) (src))[0], ((const char *) (src))[1],               \
+<span class="lineNum">     315 </span>            :           ((const char *) (src))[2], ((const char *) (src))[3],               \
+<span class="lineNum">     316 </span>            :           ((const char *) (src))[4] } }),                                     \
+<span class="lineNum">     317 </span>            :      __extension__ ((__STRING2_COPY_ARR6)                                     \
+<span class="lineNum">     318 </span>            :       { { ((const char *) (src))[0], ((const char *) (src))[1],               \
+<span class="lineNum">     319 </span>            :           ((const char *) (src))[2], ((const char *) (src))[3],               \
+<span class="lineNum">     320 </span>            :           ((const char *) (src))[4], ((const char *) (src))[5] } }),          \
+<span class="lineNum">     321 </span>            :      __extension__ ((__STRING2_COPY_ARR7)                                     \
+<span class="lineNum">     322 </span>            :       { { ((const char *) (src))[0], ((const char *) (src))[1],               \
+<span class="lineNum">     323 </span>            :           ((const char *) (src))[2], ((const char *) (src))[3],               \
+<span class="lineNum">     324 </span>            :           ((const char *) (src))[4], ((const char *) (src))[5],               \
+<span class="lineNum">     325 </span>            :           ((const char *) (src))[6] } }),                                     \
+<span class="lineNum">     326 </span>            :      __extension__ ((__STRING2_COPY_ARR8)                                     \
+<span class="lineNum">     327 </span>            :       { { ((const char *) (src))[0], ((const char *) (src))[1],               \
+<span class="lineNum">     328 </span>            :           ((const char *) (src))[2], ((const char *) (src))[3],               \
+<span class="lineNum">     329 </span>            :           ((const char *) (src))[4], ((const char *) (src))[5],               \
+<span class="lineNum">     330 </span>            :           ((const char *) (src))[6], ((const char *) (src))[7] } })
+<span class="lineNum">     331 </span>            : #    endif
+<span class="lineNum">     332 </span>            : __STRING_INLINE void *__mempcpy_small (void *, char, __STRING2_COPY_ARR2,
+<span class="lineNum">     333 </span>            :                                        __STRING2_COPY_ARR3,
+<span class="lineNum">     334 </span>            :                                        __STRING2_COPY_ARR4,
+<span class="lineNum">     335 </span>            :                                        __STRING2_COPY_ARR5,
+<span class="lineNum">     336 </span>            :                                        __STRING2_COPY_ARR6,
+<span class="lineNum">     337 </span>            :                                        __STRING2_COPY_ARR7,
+<span class="lineNum">     338 </span>            :                                        __STRING2_COPY_ARR8, size_t);
+<span class="lineNum">     339 </span>            : __STRING_INLINE void *
+<span class="lineNum">     340 </span>            : __mempcpy_small (void *__dest, char __src1,
+<span class="lineNum">     341 </span>            :                  __STRING2_COPY_ARR2 __src2, __STRING2_COPY_ARR3 __src3,
+<span class="lineNum">     342 </span>            :                  __STRING2_COPY_ARR4 __src4, __STRING2_COPY_ARR5 __src5,
+<span class="lineNum">     343 </span>            :                  __STRING2_COPY_ARR6 __src6, __STRING2_COPY_ARR7 __src7,
+<span class="lineNum">     344 </span>            :                  __STRING2_COPY_ARR8 __src8, size_t __srclen)
+<span class="lineNum">     345 </span>            : {
+<span class="lineNum">     346 </span>            :   union {
+<span class="lineNum">     347 </span>            :     char __c;
+<span class="lineNum">     348 </span>            :     __STRING2_COPY_ARR2 __sca2;
+<span class="lineNum">     349 </span>            :     __STRING2_COPY_ARR3 __sca3;
+<span class="lineNum">     350 </span>            :     __STRING2_COPY_ARR4 __sca4;
+<span class="lineNum">     351 </span>            :     __STRING2_COPY_ARR5 __sca5;
+<span class="lineNum">     352 </span>            :     __STRING2_COPY_ARR6 __sca6;
+<span class="lineNum">     353 </span>            :     __STRING2_COPY_ARR7 __sca7;
+<span class="lineNum">     354 </span>            :     __STRING2_COPY_ARR8 __sca8;
+<span class="lineNum">     355 </span>            :   } *__u = __dest;
+<span class="lineNum">     356 </span>            :   switch ((unsigned int) __srclen)
+<span class="lineNum">     357 </span>            :     {
+<span class="lineNum">     358 </span>            :     case 1:
+<span class="lineNum">     359 </span>            :       __u-&gt;__c = __src1;
+<span class="lineNum">     360 </span>            :       break;
+<span class="lineNum">     361 </span>            :     case 2:
+<span class="lineNum">     362 </span>            :       __extension__ __u-&gt;__sca2 = __src2;
+<span class="lineNum">     363 </span>            :       break;
+<span class="lineNum">     364 </span>            :     case 3:
+<span class="lineNum">     365 </span>            :       __extension__ __u-&gt;__sca3 = __src3;
+<span class="lineNum">     366 </span>            :       break;
+<span class="lineNum">     367 </span>            :     case 4:
+<span class="lineNum">     368 </span>            :       __extension__ __u-&gt;__sca4 = __src4;
+<span class="lineNum">     369 </span>            :       break;
+<span class="lineNum">     370 </span>            :     case 5:
+<span class="lineNum">     371 </span>            :       __extension__ __u-&gt;__sca5 = __src5;
+<span class="lineNum">     372 </span>            :       break;
+<span class="lineNum">     373 </span>            :     case 6:
+<span class="lineNum">     374 </span>            :       __extension__ __u-&gt;__sca6 = __src6;
+<span class="lineNum">     375 </span>            :       break;
+<span class="lineNum">     376 </span>            :     case 7:
+<span class="lineNum">     377 </span>            :       __extension__ __u-&gt;__sca7 = __src7;
+<span class="lineNum">     378 </span>            :       break;
+<span class="lineNum">     379 </span>            :     case 8:
+<span class="lineNum">     380 </span>            :       __extension__ __u-&gt;__sca8 = __src8;
+<span class="lineNum">     381 </span>            :       break;
+<span class="lineNum">     382 </span>            :     }
+<span class="lineNum">     383 </span>            :   return __extension__ ((void *) __u + __srclen);
+<span class="lineNum">     384 </span>            : }
+<span class="lineNum">     385 </span>            : #   endif
+<span class="lineNum">     386 </span>            : #  endif
+<span class="lineNum">     387 </span>            : # endif
+<span class="lineNum">     388 </span>            : #endif
+<span class="lineNum">     389 </span>            : 
+<span class="lineNum">     390 </span>            : 
+<span class="lineNum">     391 </span>            : /* Return pointer to C in S.  */
+<span class="lineNum">     392 </span>            : #ifndef _HAVE_STRING_ARCH_strchr
+<span class="lineNum">     393 </span>            : extern void *__rawmemchr (const void *__s, int __c);
+<span class="lineNum">     394 </span>            : # if __GNUC_PREREQ (3, 2)
+<span class="lineNum">     395 </span>            : #  define strchr(s, c) \
+<span class="lineNum">     396 </span>            :   (__extension__ (__builtin_constant_p (c) &amp;&amp; !__builtin_constant_p (s)       \
+<span class="lineNum">     397 </span>            :                   &amp;&amp; (c) == '\0'                                              \
+<span class="lineNum">     398 </span>            :                   ? (char *) __rawmemchr (s, c)                               \
+<span class="lineNum">     399 </span>            :                   : __builtin_strchr (s, c)))
+<span class="lineNum">     400 </span>            : # else
+<span class="lineNum">     401 </span>            : #  define strchr(s, c) \
+<span class="lineNum">     402 </span>            :   (__extension__ (__builtin_constant_p (c) &amp;&amp; (c) == '\0'                     \
+<span class="lineNum">     403 </span>            :                   ? (char *) __rawmemchr (s, c)                               \
+<span class="lineNum">     404 </span>            :                   : strchr (s, c)))
+<span class="lineNum">     405 </span>            : # endif
+<span class="lineNum">     406 </span>            : #endif
+<span class="lineNum">     407 </span>            : 
+<span class="lineNum">     408 </span>            : 
+<span class="lineNum">     409 </span>            : /* Copy SRC to DEST.  */
+<span class="lineNum">     410 </span>            : #if (!defined _HAVE_STRING_ARCH_strcpy &amp;&amp; !__GNUC_PREREQ (3, 0)) \
+<span class="lineNum">     411 </span>            :     || defined _FORCE_INLINES
+<span class="lineNum">     412 </span>            : # if !defined _HAVE_STRING_ARCH_strcpy &amp;&amp; !__GNUC_PREREQ (3, 0)
+<span class="lineNum">     413 </span>            : #  define strcpy(dest, src) \
+<span class="lineNum">     414 </span>            :   (__extension__ (__builtin_constant_p (src)                                  \
+<span class="lineNum">     415 </span>            :                   ? (__string2_1bptr_p (src) &amp;&amp; strlen (src) + 1 &lt;= 8              \
+<span class="lineNum">     416 </span>            :                      ? __strcpy_small (dest, __strcpy_args (src),             \
+<span class="lineNum">     417 </span>            :                                        strlen (src) + 1)                      \
+<span class="lineNum">     418 </span>            :                      : (char *) memcpy (dest, src, strlen (src) + 1))         \
+<span class="lineNum">     419 </span>            :                   : strcpy (dest, src)))
+<span class="lineNum">     420 </span>            : # endif
+<span class="lineNum">     421 </span>            : 
+<span class="lineNum">     422 </span>            : # if _STRING_INLINE_unaligned
+<span class="lineNum">     423 </span>            : #  ifndef _FORCE_INLINES
+<span class="lineNum">     424 </span>            : #   define __strcpy_args(src) \
+<span class="lineNum">     425 </span>            :      __extension__ __STRING2_SMALL_GET16 (src, 0),                            \
+<span class="lineNum">     426 </span>            :      __extension__ __STRING2_SMALL_GET16 (src, 4),                            \
+<span class="lineNum">     427 </span>            :      __extension__ __STRING2_SMALL_GET32 (src, 0),                            \
+<span class="lineNum">     428 </span>            :      __extension__ __STRING2_SMALL_GET32 (src, 4)
+<span class="lineNum">     429 </span>            : #  endif
+<span class="lineNum">     430 </span>            : __STRING_INLINE char *__strcpy_small (char *, __uint16_t, __uint16_t,
+<span class="lineNum">     431 </span>            :                                       __uint32_t, __uint32_t, size_t);
+<span class="lineNum">     432 </span>            : __STRING_INLINE char *
+<span class="lineNum">     433 </span>            : __strcpy_small (char *__dest,
+<span class="lineNum">     434 </span>            :                 __uint16_t __src0_2, __uint16_t __src4_2,
+<span class="lineNum">     435 </span>            :                 __uint32_t __src0_4, __uint32_t __src4_4,
+<span class="lineNum">     436 </span>            :                 size_t __srclen)
+<span class="lineNum">     437 </span>            : {
+<span class="lineNum">     438 </span>            :   union {
+<span class="lineNum">     439 </span>            :     __uint32_t __ui;
+<span class="lineNum">     440 </span>            :     __uint16_t __usi;
+<span class="lineNum">     441 </span>            :     unsigned char __uc;
+<span class="lineNum">     442 </span>            :   } *__u = (void *) __dest;
+<span class="lineNum">     443 </span>            :   switch ((unsigned int) __srclen)
+<span class="lineNum">     444 </span>            :     {
+<span class="lineNum">     445 </span>            :     case 1:
+<span class="lineNum">     446 </span>            :       __u-&gt;__uc = '\0';
+<span class="lineNum">     447 </span>            :       break;
+<span class="lineNum">     448 </span>            :     case 2:
+<span class="lineNum">     449 </span>            :       __u-&gt;__usi = __src0_2;
+<span class="lineNum">     450 </span>            :       break;
+<span class="lineNum">     451 </span>            :     case 3:
+<span class="lineNum">     452 </span>            :       __u-&gt;__usi = __src0_2;
+<span class="lineNum">     453 </span>            :       __u = __extension__ ((void *) __u + 2);
+<span class="lineNum">     454 </span>            :       __u-&gt;__uc = '\0';
+<span class="lineNum">     455 </span>            :       break;
+<span class="lineNum">     456 </span>            :     case 4:
+<span class="lineNum">     457 </span>            :       __u-&gt;__ui = __src0_4;
+<span class="lineNum">     458 </span>            :       break;
+<span class="lineNum">     459 </span>            :     case 5:
+<span class="lineNum">     460 </span>            :       __u-&gt;__ui = __src0_4;
+<span class="lineNum">     461 </span>            :       __u = __extension__ ((void *) __u + 4);
+<span class="lineNum">     462 </span>            :       __u-&gt;__uc = '\0';
+<span class="lineNum">     463 </span>            :       break;
+<span class="lineNum">     464 </span>            :     case 6:
+<span class="lineNum">     465 </span>            :       __u-&gt;__ui = __src0_4;
+<span class="lineNum">     466 </span>            :       __u = __extension__ ((void *) __u + 4);
+<span class="lineNum">     467 </span>            :       __u-&gt;__usi = __src4_2;
+<span class="lineNum">     468 </span>            :       break;
+<span class="lineNum">     469 </span>            :     case 7:
+<span class="lineNum">     470 </span>            :       __u-&gt;__ui = __src0_4;
+<span class="lineNum">     471 </span>            :       __u = __extension__ ((void *) __u + 4);
+<span class="lineNum">     472 </span>            :       __u-&gt;__usi = __src4_2;
+<span class="lineNum">     473 </span>            :       __u = __extension__ ((void *) __u + 2);
+<span class="lineNum">     474 </span>            :       __u-&gt;__uc = '\0';
+<span class="lineNum">     475 </span>            :       break;
+<span class="lineNum">     476 </span>            :     case 8:
+<span class="lineNum">     477 </span>            :       __u-&gt;__ui = __src0_4;
+<span class="lineNum">     478 </span>            :       __u = __extension__ ((void *) __u + 4);
+<span class="lineNum">     479 </span>            :       __u-&gt;__ui = __src4_4;
+<span class="lineNum">     480 </span>            :       break;
+<span class="lineNum">     481 </span>            :     }
+<span class="lineNum">     482 </span>            :   return __dest;
+<span class="lineNum">     483 </span>            : }
+<span class="lineNum">     484 </span>            : # else
+<span class="lineNum">     485 </span>            : #  ifndef _FORCE_INLINES
+<span class="lineNum">     486 </span>            : #   define __strcpy_args(src) \
+<span class="lineNum">     487 </span>            :      __extension__ ((__STRING2_COPY_ARR2)                                     \
+<span class="lineNum">     488 </span>            :       { { ((const char *) (src))[0], '\0' } }),                               \
+<span class="lineNum">     489 </span>            :      __extension__ ((__STRING2_COPY_ARR3)                                     \
+<span class="lineNum">     490 </span>            :       { { ((const char *) (src))[0], ((const char *) (src))[1],               \
+<span class="lineNum">     491 </span>            :           '\0' } }),                                                          \
+<span class="lineNum">     492 </span>            :      __extension__ ((__STRING2_COPY_ARR4)                                     \
+<span class="lineNum">     493 </span>            :       { { ((const char *) (src))[0], ((const char *) (src))[1],               \
+<span class="lineNum">     494 </span>            :           ((const char *) (src))[2], '\0' } }),                               \
+<span class="lineNum">     495 </span>            :      __extension__ ((__STRING2_COPY_ARR5)                                     \
+<span class="lineNum">     496 </span>            :       { { ((const char *) (src))[0], ((const char *) (src))[1],               \
+<span class="lineNum">     497 </span>            :           ((const char *) (src))[2], ((const char *) (src))[3],               \
+<span class="lineNum">     498 </span>            :           '\0' } }),                                                          \
+<span class="lineNum">     499 </span>            :      __extension__ ((__STRING2_COPY_ARR6)                                     \
+<span class="lineNum">     500 </span>            :       { { ((const char *) (src))[0], ((const char *) (src))[1],               \
+<span class="lineNum">     501 </span>            :           ((const char *) (src))[2], ((const char *) (src))[3],               \
+<span class="lineNum">     502 </span>            :           ((const char *) (src))[4], '\0' } }),                               \
+<span class="lineNum">     503 </span>            :      __extension__ ((__STRING2_COPY_ARR7)                                     \
+<span class="lineNum">     504 </span>            :       { { ((const char *) (src))[0], ((const char *) (src))[1],               \
+<span class="lineNum">     505 </span>            :           ((const char *) (src))[2], ((const char *) (src))[3],               \
+<span class="lineNum">     506 </span>            :           ((const char *) (src))[4], ((const char *) (src))[5],               \
+<span class="lineNum">     507 </span>            :           '\0' } }),                                                          \
+<span class="lineNum">     508 </span>            :      __extension__ ((__STRING2_COPY_ARR8)                                     \
+<span class="lineNum">     509 </span>            :       { { ((const char *) (src))[0], ((const char *) (src))[1],               \
+<span class="lineNum">     510 </span>            :           ((const char *) (src))[2], ((const char *) (src))[3],               \
+<span class="lineNum">     511 </span>            :           ((const char *) (src))[4], ((const char *) (src))[5],               \
+<span class="lineNum">     512 </span>            :           ((const char *) (src))[6], '\0' } })
+<span class="lineNum">     513 </span>            : #  endif
+<span class="lineNum">     514 </span>            : __STRING_INLINE char *__strcpy_small (char *, __STRING2_COPY_ARR2,
+<span class="lineNum">     515 </span>            :                                       __STRING2_COPY_ARR3,
+<span class="lineNum">     516 </span>            :                                       __STRING2_COPY_ARR4,
+<span class="lineNum">     517 </span>            :                                       __STRING2_COPY_ARR5,
+<span class="lineNum">     518 </span>            :                                       __STRING2_COPY_ARR6,
+<span class="lineNum">     519 </span>            :                                       __STRING2_COPY_ARR7,
+<span class="lineNum">     520 </span>            :                                       __STRING2_COPY_ARR8, size_t);
+<span class="lineNum">     521 </span>            : __STRING_INLINE char *
+<span class="lineNum">     522 </span>            : __strcpy_small (char *__dest,
+<span class="lineNum">     523 </span>            :                 __STRING2_COPY_ARR2 __src2, __STRING2_COPY_ARR3 __src3,
+<span class="lineNum">     524 </span>            :                 __STRING2_COPY_ARR4 __src4, __STRING2_COPY_ARR5 __src5,
+<span class="lineNum">     525 </span>            :                 __STRING2_COPY_ARR6 __src6, __STRING2_COPY_ARR7 __src7,
+<span class="lineNum">     526 </span>            :                 __STRING2_COPY_ARR8 __src8, size_t __srclen)
+<span class="lineNum">     527 </span>            : {
+<span class="lineNum">     528 </span>            :   union {
+<span class="lineNum">     529 </span>            :     char __c;
+<span class="lineNum">     530 </span>            :     __STRING2_COPY_ARR2 __sca2;
+<span class="lineNum">     531 </span>            :     __STRING2_COPY_ARR3 __sca3;
+<span class="lineNum">     532 </span>            :     __STRING2_COPY_ARR4 __sca4;
+<span class="lineNum">     533 </span>            :     __STRING2_COPY_ARR5 __sca5;
+<span class="lineNum">     534 </span>            :     __STRING2_COPY_ARR6 __sca6;
+<span class="lineNum">     535 </span>            :     __STRING2_COPY_ARR7 __sca7;
+<span class="lineNum">     536 </span>            :     __STRING2_COPY_ARR8 __sca8;
+<span class="lineNum">     537 </span>            :   } *__u = (void *) __dest;
+<span class="lineNum">     538 </span>            :   switch ((unsigned int) __srclen)
+<span class="lineNum">     539 </span>            :     {
+<span class="lineNum">     540 </span>            :     case 1:
+<span class="lineNum">     541 </span>            :       __u-&gt;__c = '\0';
+<span class="lineNum">     542 </span>            :       break;
+<span class="lineNum">     543 </span>            :     case 2:
+<span class="lineNum">     544 </span>            :       __extension__ __u-&gt;__sca2 = __src2;
+<span class="lineNum">     545 </span>            :       break;
+<span class="lineNum">     546 </span>            :     case 3:
+<span class="lineNum">     547 </span>            :       __extension__ __u-&gt;__sca3 = __src3;
+<span class="lineNum">     548 </span>            :       break;
+<span class="lineNum">     549 </span>            :     case 4:
+<span class="lineNum">     550 </span>            :       __extension__ __u-&gt;__sca4 = __src4;
+<span class="lineNum">     551 </span>            :       break;
+<span class="lineNum">     552 </span>            :     case 5:
+<span class="lineNum">     553 </span>            :       __extension__ __u-&gt;__sca5 = __src5;
+<span class="lineNum">     554 </span>            :       break;
+<span class="lineNum">     555 </span>            :     case 6:
+<span class="lineNum">     556 </span>            :       __extension__ __u-&gt;__sca6 = __src6;
+<span class="lineNum">     557 </span>            :       break;
+<span class="lineNum">     558 </span>            :     case 7:
+<span class="lineNum">     559 </span>            :       __extension__ __u-&gt;__sca7 = __src7;
+<span class="lineNum">     560 </span>            :       break;
+<span class="lineNum">     561 </span>            :     case 8:
+<span class="lineNum">     562 </span>            :       __extension__ __u-&gt;__sca8 = __src8;
+<span class="lineNum">     563 </span>            :       break;
+<span class="lineNum">     564 </span>            :   }
+<span class="lineNum">     565 </span>            :   return __dest;
+<span class="lineNum">     566 </span>            : }
+<span class="lineNum">     567 </span>            : # endif
+<span class="lineNum">     568 </span>            : #endif
+<span class="lineNum">     569 </span>            : 
+<span class="lineNum">     570 </span>            : 
+<span class="lineNum">     571 </span>            : /* Copy SRC to DEST, returning pointer to final NUL byte.  */
+<span class="lineNum">     572 </span>            : #ifdef __USE_GNU
+<span class="lineNum">     573 </span>            : # if !defined _HAVE_STRING_ARCH_stpcpy || defined _FORCE_INLINES
+<span class="lineNum">     574 </span>            : #  ifndef _HAVE_STRING_ARCH_stpcpy
+<span class="lineNum">     575 </span>            : #   if __GNUC_PREREQ (3, 4)
+<span class="lineNum">     576 </span>            : #    define __stpcpy(dest, src) __builtin_stpcpy (dest, src)
+<span class="lineNum">     577 </span>            : #   elif __GNUC_PREREQ (3, 0)
+<span class="lineNum">     578 </span>            : #    define __stpcpy(dest, src) \
+<span class="lineNum">     579 </span>            :   (__extension__ (__builtin_constant_p (src)                                  \
+<span class="lineNum">     580 </span>            :                   ? (__string2_1bptr_p (src) &amp;&amp; strlen (src) + 1 &lt;= 8              \
+<span class="lineNum">     581 </span>            :                      ? __builtin_strcpy (dest, src) + strlen (src)            \
+<span class="lineNum">     582 </span>            :                      : ((char *) (__mempcpy) (dest, src, strlen (src) + 1)    \
+<span class="lineNum">     583 </span>            :                         - 1))                                                 \
+<span class="lineNum">     584 </span>            :                   : __stpcpy (dest, src)))
+<span class="lineNum">     585 </span>            : #   else
+<span class="lineNum">     586 </span>            : #    define __stpcpy(dest, src) \
+<span class="lineNum">     587 </span>            :   (__extension__ (__builtin_constant_p (src)                                  \
+<span class="lineNum">     588 </span>            :                   ? (__string2_1bptr_p (src) &amp;&amp; strlen (src) + 1 &lt;= 8              \
+<span class="lineNum">     589 </span>            :                      ? __stpcpy_small (dest, __stpcpy_args (src),             \
+<span class="lineNum">     590 </span>            :                                        strlen (src) + 1)                      \
+<span class="lineNum">     591 </span>            :                      : ((char *) (__mempcpy) (dest, src, strlen (src) + 1)    \
+<span class="lineNum">     592 </span>            :                         - 1))                                                 \
+<span class="lineNum">     593 </span>            :                   : __stpcpy (dest, src)))
+<span class="lineNum">     594 </span>            : #   endif
+<span class="lineNum">     595 </span>            : /* In glibc we use this function frequently but for namespace reasons
+<span class="lineNum">     596 </span>            :    we have to use the name `__stpcpy'.  */
+<span class="lineNum">     597 </span>            : #   define stpcpy(dest, src) __stpcpy (dest, src)
+<span class="lineNum">     598 </span>            : #  endif
+<span class="lineNum">     599 </span>            : 
+<span class="lineNum">     600 </span>            : #  if !__GNUC_PREREQ (3, 0) || defined _FORCE_INLINES
+<span class="lineNum">     601 </span>            : #   if _STRING_INLINE_unaligned
+<span class="lineNum">     602 </span>            : #    ifndef _FORCE_INLINES
+<span class="lineNum">     603 </span>            : #     define __stpcpy_args(src) \
+<span class="lineNum">     604 </span>            :      __extension__ __STRING2_SMALL_GET16 (src, 0),                            \
+<span class="lineNum">     605 </span>            :      __extension__ __STRING2_SMALL_GET16 (src, 4),                            \
+<span class="lineNum">     606 </span>            :      __extension__ __STRING2_SMALL_GET32 (src, 0),                            \
+<span class="lineNum">     607 </span>            :      __extension__ __STRING2_SMALL_GET32 (src, 4)
+<span class="lineNum">     608 </span>            : #    endif
+<span class="lineNum">     609 </span>            : __STRING_INLINE char *__stpcpy_small (char *, __uint16_t, __uint16_t,
+<span class="lineNum">     610 </span>            :                                       __uint32_t, __uint32_t, size_t);
+<span class="lineNum">     611 </span>            : __STRING_INLINE char *
+<span class="lineNum">     612 </span>            : __stpcpy_small (char *__dest,
+<span class="lineNum">     613 </span>            :                 __uint16_t __src0_2, __uint16_t __src4_2,
+<span class="lineNum">     614 </span>            :                 __uint32_t __src0_4, __uint32_t __src4_4,
+<span class="lineNum">     615 </span>            :                 size_t __srclen)
+<span class="lineNum">     616 </span>            : {
+<span class="lineNum">     617 </span>            :   union {
+<span class="lineNum">     618 </span>            :     unsigned int __ui;
+<span class="lineNum">     619 </span>            :     unsigned short int __usi;
+<span class="lineNum">     620 </span>            :     unsigned char __uc;
+<span class="lineNum">     621 </span>            :     char __c;
+<span class="lineNum">     622 </span>            :   } *__u = (void *) __dest;
+<span class="lineNum">     623 </span>            :   switch ((unsigned int) __srclen)
+<span class="lineNum">     624 </span>            :     {
+<span class="lineNum">     625 </span>            :     case 1:
+<span class="lineNum">     626 </span>            :       __u-&gt;__uc = '\0';
+<span class="lineNum">     627 </span>            :       break;
+<span class="lineNum">     628 </span>            :     case 2:
+<span class="lineNum">     629 </span>            :       __u-&gt;__usi = __src0_2;
+<span class="lineNum">     630 </span>            :       __u = __extension__ ((void *) __u + 1);
+<span class="lineNum">     631 </span>            :       break;
+<span class="lineNum">     632 </span>            :     case 3:
+<span class="lineNum">     633 </span>            :       __u-&gt;__usi = __src0_2;
+<span class="lineNum">     634 </span>            :       __u = __extension__ ((void *) __u + 2);
+<span class="lineNum">     635 </span>            :       __u-&gt;__uc = '\0';
+<span class="lineNum">     636 </span>            :       break;
+<span class="lineNum">     637 </span>            :     case 4:
+<span class="lineNum">     638 </span>            :       __u-&gt;__ui = __src0_4;
+<span class="lineNum">     639 </span>            :       __u = __extension__ ((void *) __u + 3);
+<span class="lineNum">     640 </span>            :       break;
+<span class="lineNum">     641 </span>            :     case 5:
+<span class="lineNum">     642 </span>            :       __u-&gt;__ui = __src0_4;
+<span class="lineNum">     643 </span>            :       __u = __extension__ ((void *) __u + 4);
+<span class="lineNum">     644 </span>            :       __u-&gt;__uc = '\0';
+<span class="lineNum">     645 </span>            :       break;
+<span class="lineNum">     646 </span>            :     case 6:
+<span class="lineNum">     647 </span>            :       __u-&gt;__ui = __src0_4;
+<span class="lineNum">     648 </span>            :       __u = __extension__ ((void *) __u + 4);
+<span class="lineNum">     649 </span>            :       __u-&gt;__usi = __src4_2;
+<span class="lineNum">     650 </span>            :       __u = __extension__ ((void *) __u + 1);
+<span class="lineNum">     651 </span>            :       break;
+<span class="lineNum">     652 </span>            :     case 7:
+<span class="lineNum">     653 </span>            :       __u-&gt;__ui = __src0_4;
+<span class="lineNum">     654 </span>            :       __u = __extension__ ((void *) __u + 4);
+<span class="lineNum">     655 </span>            :       __u-&gt;__usi = __src4_2;
+<span class="lineNum">     656 </span>            :       __u = __extension__ ((void *) __u + 2);
+<span class="lineNum">     657 </span>            :       __u-&gt;__uc = '\0';
+<span class="lineNum">     658 </span>            :       break;
+<span class="lineNum">     659 </span>            :     case 8:
+<span class="lineNum">     660 </span>            :       __u-&gt;__ui = __src0_4;
+<span class="lineNum">     661 </span>            :       __u = __extension__ ((void *) __u + 4);
+<span class="lineNum">     662 </span>            :       __u-&gt;__ui = __src4_4;
+<span class="lineNum">     663 </span>            :       __u = __extension__ ((void *) __u + 3);
+<span class="lineNum">     664 </span>            :       break;
+<span class="lineNum">     665 </span>            :     }
+<span class="lineNum">     666 </span>            :   return &amp;__u-&gt;__c;
+<span class="lineNum">     667 </span>            : }
+<span class="lineNum">     668 </span>            : #   else
+<span class="lineNum">     669 </span>            : #    ifndef _FORCE_INLINES
+<span class="lineNum">     670 </span>            : #     define __stpcpy_args(src) \
+<span class="lineNum">     671 </span>            :      __extension__ ((__STRING2_COPY_ARR2)                                     \
+<span class="lineNum">     672 </span>            :       { { ((const char *) (src))[0], '\0' } }),                               \
+<span class="lineNum">     673 </span>            :      __extension__ ((__STRING2_COPY_ARR3)                                     \
+<span class="lineNum">     674 </span>            :       { { ((const char *) (src))[0], ((const char *) (src))[1],               \
+<span class="lineNum">     675 </span>            :           '\0' } }),                                                          \
+<span class="lineNum">     676 </span>            :      __extension__ ((__STRING2_COPY_ARR4)                                     \
+<span class="lineNum">     677 </span>            :       { { ((const char *) (src))[0], ((const char *) (src))[1],               \
+<span class="lineNum">     678 </span>            :           ((const char *) (src))[2], '\0' } }),                               \
+<span class="lineNum">     679 </span>            :      __extension__ ((__STRING2_COPY_ARR5)                                     \
+<span class="lineNum">     680 </span>            :       { { ((const char *) (src))[0], ((const char *) (src))[1],               \
+<span class="lineNum">     681 </span>            :           ((const char *) (src))[2], ((const char *) (src))[3],               \
+<span class="lineNum">     682 </span>            :           '\0' } }),                                                          \
+<span class="lineNum">     683 </span>            :      __extension__ ((__STRING2_COPY_ARR6)                                     \
+<span class="lineNum">     684 </span>            :       { { ((const char *) (src))[0], ((const char *) (src))[1],               \
+<span class="lineNum">     685 </span>            :           ((const char *) (src))[2], ((const char *) (src))[3],               \
+<span class="lineNum">     686 </span>            :           ((const char *) (src))[4], '\0' } }),                               \
+<span class="lineNum">     687 </span>            :      __extension__ ((__STRING2_COPY_ARR7)                                     \
+<span class="lineNum">     688 </span>            :       { { ((const char *) (src))[0], ((const char *) (src))[1],               \
+<span class="lineNum">     689 </span>            :           ((const char *) (src))[2], ((const char *) (src))[3],               \
+<span class="lineNum">     690 </span>            :           ((const char *) (src))[4], ((const char *) (src))[5],               \
+<span class="lineNum">     691 </span>            :           '\0' } }),                                                          \
+<span class="lineNum">     692 </span>            :      __extension__ ((__STRING2_COPY_ARR8)                                     \
+<span class="lineNum">     693 </span>            :       { { ((const char *) (src))[0], ((const char *) (src))[1],               \
+<span class="lineNum">     694 </span>            :           ((const char *) (src))[2], ((const char *) (src))[3],               \
+<span class="lineNum">     695 </span>            :           ((const char *) (src))[4], ((const char *) (src))[5],               \
+<span class="lineNum">     696 </span>            :           ((const char *) (src))[6], '\0' } })
+<span class="lineNum">     697 </span>            : #    endif
+<span class="lineNum">     698 </span>            : __STRING_INLINE char *__stpcpy_small (char *, __STRING2_COPY_ARR2,
+<span class="lineNum">     699 </span>            :                                       __STRING2_COPY_ARR3,
+<span class="lineNum">     700 </span>            :                                       __STRING2_COPY_ARR4,
+<span class="lineNum">     701 </span>            :                                       __STRING2_COPY_ARR5,
+<span class="lineNum">     702 </span>            :                                       __STRING2_COPY_ARR6,
+<span class="lineNum">     703 </span>            :                                       __STRING2_COPY_ARR7,
+<span class="lineNum">     704 </span>            :                                       __STRING2_COPY_ARR8, size_t);
+<span class="lineNum">     705 </span>            : __STRING_INLINE char *
+<span class="lineNum">     706 </span>            : __stpcpy_small (char *__dest,
+<span class="lineNum">     707 </span>            :                 __STRING2_COPY_ARR2 __src2, __STRING2_COPY_ARR3 __src3,
+<span class="lineNum">     708 </span>            :                 __STRING2_COPY_ARR4 __src4, __STRING2_COPY_ARR5 __src5,
+<span class="lineNum">     709 </span>            :                 __STRING2_COPY_ARR6 __src6, __STRING2_COPY_ARR7 __src7,
+<span class="lineNum">     710 </span>            :                 __STRING2_COPY_ARR8 __src8, size_t __srclen)
+<span class="lineNum">     711 </span>            : {
+<span class="lineNum">     712 </span>            :   union {
+<span class="lineNum">     713 </span>            :     char __c;
+<span class="lineNum">     714 </span>            :     __STRING2_COPY_ARR2 __sca2;
+<span class="lineNum">     715 </span>            :     __STRING2_COPY_ARR3 __sca3;
+<span class="lineNum">     716 </span>            :     __STRING2_COPY_ARR4 __sca4;
+<span class="lineNum">     717 </span>            :     __STRING2_COPY_ARR5 __sca5;
+<span class="lineNum">     718 </span>            :     __STRING2_COPY_ARR6 __sca6;
+<span class="lineNum">     719 </span>            :     __STRING2_COPY_ARR7 __sca7;
+<span class="lineNum">     720 </span>            :     __STRING2_COPY_ARR8 __sca8;
+<span class="lineNum">     721 </span>            :   } *__u = (void *) __dest;
+<span class="lineNum">     722 </span>            :   switch ((unsigned int) __srclen)
+<span class="lineNum">     723 </span>            :     {
+<span class="lineNum">     724 </span>            :     case 1:
+<span class="lineNum">     725 </span>            :       __u-&gt;__c = '\0';
+<span class="lineNum">     726 </span>            :       break;
+<span class="lineNum">     727 </span>            :     case 2:
+<span class="lineNum">     728 </span>            :       __extension__ __u-&gt;__sca2 = __src2;
+<span class="lineNum">     729 </span>            :       break;
+<span class="lineNum">     730 </span>            :     case 3:
+<span class="lineNum">     731 </span>            :       __extension__ __u-&gt;__sca3 = __src3;
+<span class="lineNum">     732 </span>            :       break;
+<span class="lineNum">     733 </span>            :     case 4:
+<span class="lineNum">     734 </span>            :       __extension__ __u-&gt;__sca4 = __src4;
+<span class="lineNum">     735 </span>            :       break;
+<span class="lineNum">     736 </span>            :     case 5:
+<span class="lineNum">     737 </span>            :       __extension__ __u-&gt;__sca5 = __src5;
+<span class="lineNum">     738 </span>            :       break;
+<span class="lineNum">     739 </span>            :     case 6:
+<span class="lineNum">     740 </span>            :       __extension__ __u-&gt;__sca6 = __src6;
+<span class="lineNum">     741 </span>            :       break;
+<span class="lineNum">     742 </span>            :     case 7:
+<span class="lineNum">     743 </span>            :       __extension__ __u-&gt;__sca7 = __src7;
+<span class="lineNum">     744 </span>            :       break;
+<span class="lineNum">     745 </span>            :     case 8:
+<span class="lineNum">     746 </span>            :       __extension__ __u-&gt;__sca8 = __src8;
+<span class="lineNum">     747 </span>            :       break;
+<span class="lineNum">     748 </span>            :   }
+<span class="lineNum">     749 </span>            :   return __dest + __srclen - 1;
+<span class="lineNum">     750 </span>            : }
+<span class="lineNum">     751 </span>            : #   endif
+<span class="lineNum">     752 </span>            : #  endif
+<span class="lineNum">     753 </span>            : # endif
+<span class="lineNum">     754 </span>            : #endif
+<span class="lineNum">     755 </span>            : 
+<span class="lineNum">     756 </span>            : 
+<span class="lineNum">     757 </span>            : /* Copy no more than N characters of SRC to DEST.  */
+<span class="lineNum">     758 </span>            : #ifndef _HAVE_STRING_ARCH_strncpy
+<span class="lineNum">     759 </span>            : # if __GNUC_PREREQ (3, 2)
+<span class="lineNum">     760 </span>            : #  define strncpy(dest, src, n) __builtin_strncpy (dest, src, n)
+<span class="lineNum">     761 </span>            : # else
+<span class="lineNum">     762 </span>            : #  define strncpy(dest, src, n) \
+<span class="lineNum">     763 </span>            :   (__extension__ (__builtin_constant_p (src) &amp;&amp; __builtin_constant_p (n)      \
+<span class="lineNum">     764 </span>            :                   ? (strlen (src) + 1 &gt;= ((size_t) (n))                            \
+<span class="lineNum">     765 </span>            :                      ? (char *) memcpy (dest, src, n)                         \
+<span class="lineNum">     766 </span>            :                      : strncpy (dest, src, n))                                \
+<span class="lineNum">     767 </span>            :                   : strncpy (dest, src, n)))
+<span class="lineNum">     768 </span>            : # endif
+<span class="lineNum">     769 </span>            : #endif
+<span class="lineNum">     770 </span>            : 
+<span class="lineNum">     771 </span>            : 
+<span class="lineNum">     772 </span>            : /* Append no more than N characters from SRC onto DEST.  */
+<span class="lineNum">     773 </span>            : #ifndef _HAVE_STRING_ARCH_strncat
+<span class="lineNum">     774 </span>            : # ifdef _USE_STRING_ARCH_strchr
+<span class="lineNum">     775 </span>            : #  define strncat(dest, src, n) \
+<span class="lineNum">     776 </span>            :   (__extension__ ({ char *__dest = (dest);                                    \
+<span class="lineNum">     777 </span>            :                     __builtin_constant_p (src) &amp;&amp; __builtin_constant_p (n)    \
+<span class="lineNum">     778 </span>            :                     ? (strlen (src) &lt; ((size_t) (n))                       \
+<span class="lineNum">     779 </span>            :                        ? strcat (__dest, src)                                 \
+<span class="lineNum">     780 </span>            :                        : (*((char *) __mempcpy (strchr (__dest, '\0'),        \
+<span class="lineNum">     781 </span>            :                                                 src, n)) = '\0', __dest))     \
+<span class="lineNum">     782 </span>            :                     : strncat (dest, src, n); }))
+<span class="lineNum">     783 </span>            : # elif __GNUC_PREREQ (3, 2)
+<span class="lineNum">     784 </span>            : #  define strncat(dest, src, n) __builtin_strncat (dest, src, n)
+<span class="lineNum">     785 </span>            : # else
+<span class="lineNum">     786 </span>            : #  define strncat(dest, src, n) \
+<span class="lineNum">     787 </span>            :   (__extension__ (__builtin_constant_p (src) &amp;&amp; __builtin_constant_p (n)      \
+<span class="lineNum">     788 </span>            :                   ? (strlen (src) &lt; ((size_t) (n))                         \
+<span class="lineNum">     789 </span>            :                      ? strcat (dest, src)                                     \
+<span class="lineNum">     790 </span>            :                      : strncat (dest, src, n))                                \
+<span class="lineNum">     791 </span>            :                   : strncat (dest, src, n)))
+<span class="lineNum">     792 </span>            : # endif
+<span class="lineNum">     793 </span>            : #endif
+<span class="lineNum">     794 </span>            : 
+<span class="lineNum">     795 </span>            : 
+<span class="lineNum">     796 </span>            : /* Compare characters of S1 and S2.  */
+<span class="lineNum">     797 </span>            : #ifndef _HAVE_STRING_ARCH_strcmp
+<span class="lineNum">     798 </span>            : # if __GNUC_PREREQ (3, 2)
+<span class="lineNum">     799 </span>            : #  define strcmp(s1, s2) \
+<span class="lineNum">     800 </span>            :   __extension__                                                               \
+<span class="lineNum">     801 </span>            :   ({ size_t __s1_len, __s2_len;                                               \
+<span class="lineNum">     802 </span>            :      (__builtin_constant_p (s1) &amp;&amp; __builtin_constant_p (s2)                  \
+<span class="lineNum">     803 </span>            :       &amp;&amp; (__s1_len = __builtin_strlen (s1), __s2_len = __builtin_strlen (s2), \
+<span class="lineNum">     804 </span>            :           (!__string2_1bptr_p (s1) || __s1_len &gt;= 4)                       \
+<span class="lineNum">     805 </span>            :           &amp;&amp; (!__string2_1bptr_p (s2) || __s2_len &gt;= 4))                   \
+<span class="lineNum">     806 </span>            :       ? __builtin_strcmp (s1, s2)                                             \
+<span class="lineNum">     807 </span>            :       : (__builtin_constant_p (s1) &amp;&amp; __string2_1bptr_p (s1)                  \
+<span class="lineNum">     808 </span>            :          &amp;&amp; (__s1_len = __builtin_strlen (s1), __s1_len &lt; 4)               \
+<span class="lineNum">     809 </span>            :          ? (__builtin_constant_p (s2) &amp;&amp; __string2_1bptr_p (s2)               \
+<span class="lineNum">     810 </span>            :             ? __builtin_strcmp (s1, s2)                                       \
+<span class="lineNum">     811 </span>            :             : __strcmp_cg (s1, s2, __s1_len))                                 \
+<span class="lineNum">     812 </span>            :          : (__builtin_constant_p (s2) &amp;&amp; __string2_1bptr_p (s2)               \
+<span class="lineNum">     813 </span>            :             &amp;&amp; (__s2_len = __builtin_strlen (s2), __s2_len &lt; 4)                    \
+<span class="lineNum">     814 </span>            :             ? (__builtin_constant_p (s1) &amp;&amp; __string2_1bptr_p (s1)            \
+<span class="lineNum">     815 </span>            :                ? __builtin_strcmp (s1, s2)                                    \
+<span class="lineNum">     816 </span>            :                : __strcmp_gc (s1, s2, __s2_len))                              \
+<span class="lineNum">     817 </span>            :             : __builtin_strcmp (s1, s2)))); })
+<span class="lineNum">     818 </span>            : # else
+<span class="lineNum">     819 </span>            : #  define strcmp(s1, s2) \
+<span class="lineNum">     820 </span>            :   __extension__                                                               \
+<span class="lineNum">     821 </span>            :   ({ size_t __s1_len, __s2_len;                                               \
+<span class="lineNum">     822 </span>            :      (__builtin_constant_p (s1) &amp;&amp; __builtin_constant_p (s2)                  \
+<span class="lineNum">     823 </span>            :       &amp;&amp; (__s1_len = strlen (s1), __s2_len = strlen (s2),                     \
+<span class="lineNum">     824 </span>            :           (!__string2_1bptr_p (s1) || __s1_len &gt;= 4)                       \
+<span class="lineNum">     825 </span>            :           &amp;&amp; (!__string2_1bptr_p (s2) || __s2_len &gt;= 4))                   \
+<span class="lineNum">     826 </span>            :       ? memcmp ((const char *) (s1), (const char *) (s2),                     \
+<span class="lineNum">     827 </span>            :                 (__s1_len &lt; __s2_len ? __s1_len : __s2_len) + 1)           \
+<span class="lineNum">     828 </span>            :       : (__builtin_constant_p (s1) &amp;&amp; __string2_1bptr_p (s1)                  \
+<span class="lineNum">     829 </span>            :          &amp;&amp; (__s1_len = strlen (s1), __s1_len &lt; 4)                         \
+<span class="lineNum">     830 </span>            :          ? (__builtin_constant_p (s2) &amp;&amp; __string2_1bptr_p (s2)               \
+<span class="lineNum">     831 </span>            :             ? __strcmp_cc (s1, s2, __s1_len)                                  \
+<span class="lineNum">     832 </span>            :             : __strcmp_cg (s1, s2, __s1_len))                                 \
+<span class="lineNum">     833 </span>            :          : (__builtin_constant_p (s2) &amp;&amp; __string2_1bptr_p (s2)               \
+<span class="lineNum">     834 </span>            :             &amp;&amp; (__s2_len = strlen (s2), __s2_len &lt; 4)                              \
+<span class="lineNum">     835 </span>            :             ? (__builtin_constant_p (s1) &amp;&amp; __string2_1bptr_p (s1)            \
+<span class="lineNum">     836 </span>            :                ? __strcmp_cc (s1, s2, __s2_len)                               \
+<span class="lineNum">     837 </span>            :                : __strcmp_gc (s1, s2, __s2_len))                              \
+<span class="lineNum">     838 </span>            :             : strcmp (s1, s2)))); })
+<span class="lineNum">     839 </span>            : # endif
+<span class="lineNum">     840 </span>            : 
+<span class="lineNum">     841 </span>            : # define __strcmp_cc(s1, s2, l) \
+<span class="lineNum">     842 </span>            :   (__extension__ ({ int __result =                                            \
+<span class="lineNum">     843 </span>            :                       (((const unsigned char *) (const char *) (s1))[0]       \
+<span class="lineNum">     844 </span>            :                        - ((const unsigned char *) (const char *)(s2))[0]);    \
+<span class="lineNum">     845 </span>            :                     if (l &gt; 0 &amp;&amp; __result == 0)                                    \
+<span class="lineNum">     846 </span>            :                       {                                                       \
+<span class="lineNum">     847 </span>            :                         __result = (((const unsigned char *)                  \
+<span class="lineNum">     848 </span>            :                                      (const char *) (s1))[1]                  \
+<span class="lineNum">     849 </span>            :                                     - ((const unsigned char *)                \
+<span class="lineNum">     850 </span>            :                                        (const char *) (s2))[1]);              \
+<span class="lineNum">     851 </span>            :                         if (l &gt; 1 &amp;&amp; __result == 0)                        \
+<span class="lineNum">     852 </span>            :                           {                                                   \
+<span class="lineNum">     853 </span>            :                             __result =                                        \
+<span class="lineNum">     854 </span>            :                               (((const unsigned char *)                       \
+<span class="lineNum">     855 </span>            :                                 (const char *) (s1))[2]                       \
+<span class="lineNum">     856 </span>            :                                - ((const unsigned char *)                     \
+<span class="lineNum">     857 </span>            :                                   (const char *) (s2))[2]);                   \
+<span class="lineNum">     858 </span>            :                             if (l &gt; 2 &amp;&amp; __result == 0)                            \
+<span class="lineNum">     859 </span>            :                               __result =                                      \
+<span class="lineNum">     860 </span>            :                                 (((const unsigned char *)                     \
+<span class="lineNum">     861 </span>            :                                   (const char *) (s1))[3]                     \
+<span class="lineNum">     862 </span>            :                                  - ((const unsigned char *)                   \
+<span class="lineNum">     863 </span>            :                                     (const char *) (s2))[3]);                 \
+<span class="lineNum">     864 </span>            :                           }                                                   \
+<span class="lineNum">     865 </span>            :                       }                                                       \
+<span class="lineNum">     866 </span>            :                     __result; }))
+<span class="lineNum">     867 </span>            : 
+<span class="lineNum">     868 </span>            : # define __strcmp_cg(s1, s2, l1) \
+<span class="lineNum">     869 </span>            :   (__extension__ ({ const unsigned char *__s2 =                               \
+<span class="lineNum">     870 </span>            :                       (const unsigned char *) (const char *) (s2);            \
+<span class="lineNum">     871 </span>            :                     int __result =                                            \
+<span class="lineNum">     872 </span>            :                       (((const unsigned char *) (const char *) (s1))[0]       \
+<span class="lineNum">     873 </span>            :                        - __s2[0]);                                            \
+<span class="lineNum">     874 </span>            :                     if (l1 &gt; 0 &amp;&amp; __result == 0)                           \
+<span class="lineNum">     875 </span>            :                       {                                                       \
+<span class="lineNum">     876 </span>            :                         __result = (((const unsigned char *)                  \
+<span class="lineNum">     877 </span>            :                                      (const char *) (s1))[1] - __s2[1]);      \
+<span class="lineNum">     878 </span>            :                         if (l1 &gt; 1 &amp;&amp; __result == 0)                       \
+<span class="lineNum">     879 </span>            :                           {                                                   \
+<span class="lineNum">     880 </span>            :                             __result = (((const unsigned char *)              \
+<span class="lineNum">     881 </span>            :                                          (const char *) (s1))[2] - __s2[2]);  \
+<span class="lineNum">     882 </span>            :                             if (l1 &gt; 2 &amp;&amp; __result == 0)                   \
+<span class="lineNum">     883 </span>            :                               __result = (((const unsigned char *)            \
+<span class="lineNum">     884 </span>            :                                           (const char *)  (s1))[3]            \
+<span class="lineNum">     885 </span>            :                                           - __s2[3]);                         \
+<span class="lineNum">     886 </span>            :                           }                                                   \
+<span class="lineNum">     887 </span>            :                       }                                                       \
+<span class="lineNum">     888 </span>            :                     __result; }))
+<span class="lineNum">     889 </span>            : 
+<span class="lineNum">     890 </span>            : # define __strcmp_gc(s1, s2, l2) (- __strcmp_cg (s2, s1, l2))
+<span class="lineNum">     891 </span>            : #endif
+<span class="lineNum">     892 </span>            : 
+<span class="lineNum">     893 </span>            : 
+<span class="lineNum">     894 </span>            : /* Compare N characters of S1 and S2.  */
+<span class="lineNum">     895 </span>            : #ifndef _HAVE_STRING_ARCH_strncmp
+<span class="lineNum">     896 </span>            : # define strncmp(s1, s2, n)                                                   \
+<span class="lineNum">     897 </span>            :   (__extension__ (__builtin_constant_p (n)                                    \
+<span class="lineNum">     898 </span>            :                   &amp;&amp; ((__builtin_constant_p (s1)                              \
+<span class="lineNum">     899 </span>            :                        &amp;&amp; strlen (s1) &lt; ((size_t) (n)))                            \
+<span class="lineNum">     900 </span>            :                       || (__builtin_constant_p (s2)                           \
+<span class="lineNum">     901 </span>            :                           &amp;&amp; strlen (s2) &lt; ((size_t) (n))))                \
+<span class="lineNum">     902 </span>            :                   ? strcmp (s1, s2) : strncmp (s1, s2, n)))
+<span class="lineNum">     903 </span>            : #endif
+<span class="lineNum">     904 </span>            : 
+<span class="lineNum">     905 </span>            : 
+<span class="lineNum">     906 </span>            : /* Return the length of the initial segment of S which
+<span class="lineNum">     907 </span>            :    consists entirely of characters not in REJECT.  */
+<span class="lineNum">     908 </span>            : #if !defined _HAVE_STRING_ARCH_strcspn || defined _FORCE_INLINES
+<span class="lineNum">     909 </span>            : # ifndef _HAVE_STRING_ARCH_strcspn
+<span class="lineNum">     910 </span>            : #  if __GNUC_PREREQ (3, 2)
+<span class="lineNum">     911 </span>            : #   define strcspn(s, reject) \
+<span class="lineNum">     912 </span>            :   __extension__                                                               \
+<span class="lineNum">     913 </span>            :   ({ char __r0, __r1, __r2;                                                   \
+<span class="lineNum">     914 </span>            :      (__builtin_constant_p (reject) &amp;&amp; __string2_1bptr_p (reject)             \
+<span class="lineNum">     915 </span>            :       ? ((__builtin_constant_p (s) &amp;&amp; __string2_1bptr_p (s))                  \
+<span class="lineNum">     916 </span>            :          ? __builtin_strcspn (s, reject)                                      \
+<span class="lineNum">     917 </span>            :          : ((__r0 = ((const char *) (reject))[0], __r0 == '\0')               \
+<span class="lineNum">     918 </span>            :             ? strlen (s)                                                      \
+<span class="lineNum">     919 </span>            :             : ((__r1 = ((const char *) (reject))[1], __r1 == '\0')            \
+<span class="lineNum">     920 </span>            :                ? __strcspn_c1 (s, __r0)                                       \
+<span class="lineNum">     921 </span>            :                : ((__r2 = ((const char *) (reject))[2], __r2 == '\0')         \
+<span class="lineNum">     922 </span>            :                   ? __strcspn_c2 (s, __r0, __r1)                              \
+<span class="lineNum">     923 </span>            :                   : (((const char *) (reject))[3] == '\0'                     \
+<span class="lineNum">     924 </span>            :                      ? __strcspn_c3 (s, __r0, __r1, __r2)                     \
+<span class="lineNum">     925 </span>            :                      : __builtin_strcspn (s, reject))))))                     \
+<span class="lineNum">     926 </span>            :       : __builtin_strcspn (s, reject)); })
+<span class="lineNum">     927 </span>            : #  else
+<span class="lineNum">     928 </span>            : #   define strcspn(s, reject) \
+<span class="lineNum">     929 </span>            :   __extension__                                                               \
+<span class="lineNum">     930 </span>            :   ({ char __r0, __r1, __r2;                                                   \
+<span class="lineNum">     931 </span>            :      (__builtin_constant_p (reject) &amp;&amp; __string2_1bptr_p (reject)             \
+<span class="lineNum">     932 </span>            :       ? ((__r0 = ((const char *) (reject))[0], __r0 == '\0')                  \
+<span class="lineNum">     933 </span>            :          ? strlen (s)                                                         \
+<span class="lineNum">     934 </span>            :          : ((__r1 = ((const char *) (reject))[1], __r1 == '\0')               \
+<span class="lineNum">     935 </span>            :             ? __strcspn_c1 (s, __r0)                                          \
+<span class="lineNum">     936 </span>            :             : ((__r2 = ((const char *) (reject))[2], __r2 == '\0')            \
+<span class="lineNum">     937 </span>            :                ? __strcspn_c2 (s, __r0, __r1)                                 \
+<span class="lineNum">     938 </span>            :                : (((const char *) (reject))[3] == '\0'                        \
+<span class="lineNum">     939 </span>            :                   ? __strcspn_c3 (s, __r0, __r1, __r2)                        \
+<span class="lineNum">     940 </span>            :                   : strcspn (s, reject)))))                                   \
+<span class="lineNum">     941 </span>            :       : strcspn (s, reject)); })
+<span class="lineNum">     942 </span>            : #  endif
+<span class="lineNum">     943 </span>            : # endif
+<span class="lineNum">     944 </span>            : 
+<span class="lineNum">     945 </span>            : __STRING_INLINE size_t __strcspn_c1 (const char *__s, int __reject);
+<span class="lineNum">     946 </span>            : __STRING_INLINE size_t
+<span class="lineNum">     947 </span>            : __strcspn_c1 (const char *__s, int __reject)
+<span class="lineNum">     948 </span>            : {
+<span class="lineNum">     949 </span>            :   size_t __result = 0;
+<span class="lineNum">     950 </span>            :   while (__s[__result] != '\0' &amp;&amp; __s[__result] != __reject)
+<span class="lineNum">     951 </span>            :     ++__result;
+<span class="lineNum">     952 </span>            :   return __result;
+<span class="lineNum">     953 </span>            : }
+<span class="lineNum">     954 </span>            : 
+<span class="lineNum">     955 </span>            : __STRING_INLINE size_t __strcspn_c2 (const char *__s, int __reject1,
+<span class="lineNum">     956 </span>            :                                      int __reject2);
+<span class="lineNum">     957 </span>            : __STRING_INLINE size_t
+<span class="lineNum">     958 </span>            : __strcspn_c2 (const char *__s, int __reject1, int __reject2)
+<span class="lineNum">     959 </span>            : {
+<span class="lineNum">     960 </span>            :   size_t __result = 0;
+<span class="lineNum">     961 </span><span class="lineNoCov">          0 :   while (__s[__result] != '\0' &amp;&amp; __s[__result] != __reject1</span>
+<span class="lineNum">     962 </span><span class="lineNoCov">          0 :          &amp;&amp; __s[__result] != __reject2)</span>
+<span class="lineNum">     963 </span><span class="lineNoCov">          0 :     ++__result;</span>
+<span class="lineNum">     964 </span>            :   return __result;
+<span class="lineNum">     965 </span>            : }
+<span class="lineNum">     966 </span>            : 
+<span class="lineNum">     967 </span>            : __STRING_INLINE size_t __strcspn_c3 (const char *__s, int __reject1,
+<span class="lineNum">     968 </span>            :                                      int __reject2, int __reject3);
+<span class="lineNum">     969 </span>            : __STRING_INLINE size_t
+<span class="lineNum">     970 </span>            : __strcspn_c3 (const char *__s, int __reject1, int __reject2,
+<span class="lineNum">     971 </span>            :               int __reject3)
+<span class="lineNum">     972 </span>            : {
+<span class="lineNum">     973 </span>            :   size_t __result = 0;
+<span class="lineNum">     974 </span>            :   while (__s[__result] != '\0' &amp;&amp; __s[__result] != __reject1
+<span class="lineNum">     975 </span>            :          &amp;&amp; __s[__result] != __reject2 &amp;&amp; __s[__result] != __reject3)
+<span class="lineNum">     976 </span>            :     ++__result;
+<span class="lineNum">     977 </span>            :   return __result;
+<span class="lineNum">     978 </span>            : }
+<span class="lineNum">     979 </span>            : #endif
+<span class="lineNum">     980 </span>            : 
+<span class="lineNum">     981 </span>            : 
+<span class="lineNum">     982 </span>            : /* Return the length of the initial segment of S which
+<span class="lineNum">     983 </span>            :    consists entirely of characters in ACCEPT.  */
+<span class="lineNum">     984 </span>            : #if !defined _HAVE_STRING_ARCH_strspn || defined _FORCE_INLINES
+<span class="lineNum">     985 </span>            : # ifndef _HAVE_STRING_ARCH_strspn
+<span class="lineNum">     986 </span>            : #  if __GNUC_PREREQ (3, 2)
+<span class="lineNum">     987 </span>            : #   define strspn(s, accept) \
+<span class="lineNum">     988 </span>            :   __extension__                                                               \
+<span class="lineNum">     989 </span>            :   ({ char __a0, __a1, __a2;                                                   \
+<span class="lineNum">     990 </span>            :      (__builtin_constant_p (accept) &amp;&amp; __string2_1bptr_p (accept)             \
+<span class="lineNum">     991 </span>            :       ? ((__builtin_constant_p (s) &amp;&amp; __string2_1bptr_p (s))                  \
+<span class="lineNum">     992 </span>            :          ? __builtin_strspn (s, accept)                                       \
+<span class="lineNum">     993 </span>            :          : ((__a0 = ((const char *) (accept))[0], __a0 == '\0')               \
+<span class="lineNum">     994 </span>            :             ? ((void) (s), (size_t) 0)                                        \
+<span class="lineNum">     995 </span>            :             : ((__a1 = ((const char *) (accept))[1], __a1 == '\0')            \
+<span class="lineNum">     996 </span>            :                ? __strspn_c1 (s, __a0)                                        \
+<span class="lineNum">     997 </span>            :                : ((__a2 = ((const char *) (accept))[2], __a2 == '\0')         \
+<span class="lineNum">     998 </span>            :                   ? __strspn_c2 (s, __a0, __a1)                               \
+<span class="lineNum">     999 </span>            :                   : (((const char *) (accept))[3] == '\0'                     \
+<span class="lineNum">    1000 </span>            :                      ? __strspn_c3 (s, __a0, __a1, __a2)                      \
+<span class="lineNum">    1001 </span>            :                      : __builtin_strspn (s, accept))))))                      \
+<span class="lineNum">    1002 </span>            :       : __builtin_strspn (s, accept)); })
+<span class="lineNum">    1003 </span>            : #  else
+<span class="lineNum">    1004 </span>            : #   define strspn(s, accept) \
+<span class="lineNum">    1005 </span>            :   __extension__                                                               \
+<span class="lineNum">    1006 </span>            :   ({ char __a0, __a1, __a2;                                                   \
+<span class="lineNum">    1007 </span>            :      (__builtin_constant_p (accept) &amp;&amp; __string2_1bptr_p (accept)             \
+<span class="lineNum">    1008 </span>            :       ? ((__a0 = ((const char *) (accept))[0], __a0 == '\0')                  \
+<span class="lineNum">    1009 </span>            :          ? ((void) (s), (size_t) 0)                                           \
+<span class="lineNum">    1010 </span>            :          : ((__a1 = ((const char *) (accept))[1], __a1 == '\0')               \
+<span class="lineNum">    1011 </span>            :             ? __strspn_c1 (s, __a0)                                           \
+<span class="lineNum">    1012 </span>            :             : ((__a2 = ((const char *) (accept))[2], __a2 == '\0')            \
+<span class="lineNum">    1013 </span>            :                ? __strspn_c2 (s, __a0, __a1)                                  \
+<span class="lineNum">    1014 </span>            :                : (((const char *) (accept))[3] == '\0'                        \
+<span class="lineNum">    1015 </span>            :                   ? __strspn_c3 (s, __a0, __a1, __a2)                         \
+<span class="lineNum">    1016 </span>            :                   : strspn (s, accept)))))                                    \
+<span class="lineNum">    1017 </span>            :       : strspn (s, accept)); })
+<span class="lineNum">    1018 </span>            : #  endif
+<span class="lineNum">    1019 </span>            : # endif
+<span class="lineNum">    1020 </span>            : 
+<span class="lineNum">    1021 </span>            : __STRING_INLINE size_t __strspn_c1 (const char *__s, int __accept);
+<span class="lineNum">    1022 </span>            : __STRING_INLINE size_t
+<span class="lineNum">    1023 </span>            : __strspn_c1 (const char *__s, int __accept)
+<span class="lineNum">    1024 </span>            : {
+<span class="lineNum">    1025 </span>            :   size_t __result = 0;
+<span class="lineNum">    1026 </span>            :   /* Please note that __accept never can be '\0'.  */
+<span class="lineNum">    1027 </span><span class="lineNoCov">          0 :   while (__s[__result] == __accept)</span>
+<span class="lineNum">    1028 </span><span class="lineNoCov">          0 :     ++__result;</span>
+<span class="lineNum">    1029 </span>            :   return __result;
+<span class="lineNum">    1030 </span>            : }
+<span class="lineNum">    1031 </span>            : 
+<span class="lineNum">    1032 </span>            : __STRING_INLINE size_t __strspn_c2 (const char *__s, int __accept1,
+<span class="lineNum">    1033 </span>            :                                     int __accept2);
+<span class="lineNum">    1034 </span>            : __STRING_INLINE size_t
+<span class="lineNum">    1035 </span>            : __strspn_c2 (const char *__s, int __accept1, int __accept2)
+<span class="lineNum">    1036 </span>            : {
+<span class="lineNum">    1037 </span>            :   size_t __result = 0;
+<span class="lineNum">    1038 </span>            :   /* Please note that __accept1 and __accept2 never can be '\0'.  */
+<span class="lineNum">    1039 </span>            :   while (__s[__result] == __accept1 || __s[__result] == __accept2)
+<span class="lineNum">    1040 </span>            :     ++__result;
+<span class="lineNum">    1041 </span>            :   return __result;
+<span class="lineNum">    1042 </span>            : }
+<span class="lineNum">    1043 </span>            : 
+<span class="lineNum">    1044 </span>            : __STRING_INLINE size_t __strspn_c3 (const char *__s, int __accept1,
+<span class="lineNum">    1045 </span>            :                                     int __accept2, int __accept3);
+<span class="lineNum">    1046 </span>            : __STRING_INLINE size_t
+<span class="lineNum">    1047 </span>            : __strspn_c3 (const char *__s, int __accept1, int __accept2, int __accept3)
+<span class="lineNum">    1048 </span>            : {
+<span class="lineNum">    1049 </span>            :   size_t __result = 0;
+<span class="lineNum">    1050 </span>            :   /* Please note that __accept1 to __accept3 never can be '\0'.  */
+<span class="lineNum">    1051 </span>            :   while (__s[__result] == __accept1 || __s[__result] == __accept2
+<span class="lineNum">    1052 </span>            :          || __s[__result] == __accept3)
+<span class="lineNum">    1053 </span>            :     ++__result;
+<span class="lineNum">    1054 </span>            :   return __result;
+<span class="lineNum">    1055 </span>            : }
+<span class="lineNum">    1056 </span>            : #endif
+<span class="lineNum">    1057 </span>            : 
+<span class="lineNum">    1058 </span>            : 
+<span class="lineNum">    1059 </span>            : /* Find the first occurrence in S of any character in ACCEPT.  */
+<span class="lineNum">    1060 </span>            : #if !defined _HAVE_STRING_ARCH_strpbrk || defined _FORCE_INLINES
+<span class="lineNum">    1061 </span>            : # ifndef _HAVE_STRING_ARCH_strpbrk
+<span class="lineNum">    1062 </span>            : #  if __GNUC_PREREQ (3, 2)
+<span class="lineNum">    1063 </span>            : #   define strpbrk(s, accept) \
+<span class="lineNum">    1064 </span>            :   __extension__                                                               \
+<span class="lineNum">    1065 </span>            :   ({ char __a0, __a1, __a2;                                                   \
+<span class="lineNum">    1066 </span>            :      (__builtin_constant_p (accept) &amp;&amp; __string2_1bptr_p (accept)             \
+<span class="lineNum">    1067 </span>            :       ? ((__builtin_constant_p (s) &amp;&amp; __string2_1bptr_p (s))                  \
+<span class="lineNum">    1068 </span>            :          ? __builtin_strpbrk (s, accept)                                      \
+<span class="lineNum">    1069 </span>            :          : ((__a0 = ((const char  *) (accept))[0], __a0 == '\0')              \
+<span class="lineNum">    1070 </span>            :             ? ((void) (s), (char *) NULL)                                     \
+<span class="lineNum">    1071 </span>            :             : ((__a1 = ((const char *) (accept))[1], __a1 == '\0')            \
+<span class="lineNum">    1072 </span>            :                ? __builtin_strchr (s, __a0)                                   \
+<span class="lineNum">    1073 </span>            :                : ((__a2 = ((const char *) (accept))[2], __a2 == '\0')         \
+<span class="lineNum">    1074 </span>            :                   ? __strpbrk_c2 (s, __a0, __a1)                              \
+<span class="lineNum">    1075 </span>            :                   : (((const char *) (accept))[3] == '\0'                     \
+<span class="lineNum">    1076 </span>            :                      ? __strpbrk_c3 (s, __a0, __a1, __a2)                     \
+<span class="lineNum">    1077 </span>            :                      : __builtin_strpbrk (s, accept))))))                     \
+<span class="lineNum">    1078 </span>            :       : __builtin_strpbrk (s, accept)); })
+<span class="lineNum">    1079 </span>            : #  else
+<span class="lineNum">    1080 </span>            : #   define strpbrk(s, accept) \
+<span class="lineNum">    1081 </span>            :   __extension__                                                               \
+<span class="lineNum">    1082 </span>            :   ({ char __a0, __a1, __a2;                                                   \
+<span class="lineNum">    1083 </span>            :      (__builtin_constant_p (accept) &amp;&amp; __string2_1bptr_p (accept)             \
+<span class="lineNum">    1084 </span>            :       ? ((__a0 = ((const char  *) (accept))[0], __a0 == '\0')                 \
+<span class="lineNum">    1085 </span>            :          ? ((void) (s), (char *) NULL)                                        \
+<span class="lineNum">    1086 </span>            :          : ((__a1 = ((const char *) (accept))[1], __a1 == '\0')               \
+<span class="lineNum">    1087 </span>            :             ? strchr (s, __a0)                                                \
+<span class="lineNum">    1088 </span>            :             : ((__a2 = ((const char *) (accept))[2], __a2 == '\0')            \
+<span class="lineNum">    1089 </span>            :                ? __strpbrk_c2 (s, __a0, __a1)                                 \
+<span class="lineNum">    1090 </span>            :                : (((const char *) (accept))[3] == '\0'                        \
+<span class="lineNum">    1091 </span>            :                   ? __strpbrk_c3 (s, __a0, __a1, __a2)                        \
+<span class="lineNum">    1092 </span>            :                   : strpbrk (s, accept)))))                                   \
+<span class="lineNum">    1093 </span>            :       : strpbrk (s, accept)); })
+<span class="lineNum">    1094 </span>            : #  endif
+<span class="lineNum">    1095 </span>            : # endif
+<span class="lineNum">    1096 </span>            : 
+<span class="lineNum">    1097 </span>            : __STRING_INLINE char *__strpbrk_c2 (const char *__s, int __accept1,
+<span class="lineNum">    1098 </span>            :                                     int __accept2);
+<span class="lineNum">    1099 </span>            : __STRING_INLINE char *
+<span class="lineNum">    1100 </span>            : __strpbrk_c2 (const char *__s, int __accept1, int __accept2)
+<span class="lineNum">    1101 </span>            : {
+<span class="lineNum">    1102 </span>            :   /* Please note that __accept1 and __accept2 never can be '\0'.  */
+<span class="lineNum">    1103 </span>            :   while (*__s != '\0' &amp;&amp; *__s != __accept1 &amp;&amp; *__s != __accept2)
+<span class="lineNum">    1104 </span>            :     ++__s;
+<span class="lineNum">    1105 </span>            :   return *__s == '\0' ? NULL : (char *) (size_t) __s;
+<span class="lineNum">    1106 </span>            : }
+<span class="lineNum">    1107 </span>            : 
+<span class="lineNum">    1108 </span>            : __STRING_INLINE char *__strpbrk_c3 (const char *__s, int __accept1,
+<span class="lineNum">    1109 </span>            :                                     int __accept2, int __accept3);
+<span class="lineNum">    1110 </span>            : __STRING_INLINE char *
+<span class="lineNum">    1111 </span>            : __strpbrk_c3 (const char *__s, int __accept1, int __accept2, int __accept3)
+<span class="lineNum">    1112 </span>            : {
+<span class="lineNum">    1113 </span>            :   /* Please note that __accept1 to __accept3 never can be '\0'.  */
+<span class="lineNum">    1114 </span>            :   while (*__s != '\0' &amp;&amp; *__s != __accept1 &amp;&amp; *__s != __accept2
+<span class="lineNum">    1115 </span>            :          &amp;&amp; *__s != __accept3)
+<span class="lineNum">    1116 </span>            :     ++__s;
+<span class="lineNum">    1117 </span>            :   return *__s == '\0' ? NULL : (char *) (size_t) __s;
+<span class="lineNum">    1118 </span>            : }
+<span class="lineNum">    1119 </span>            : #endif
+<span class="lineNum">    1120 </span>            : 
+<span class="lineNum">    1121 </span>            : 
+<span class="lineNum">    1122 </span>            : /* Find the first occurrence of NEEDLE in HAYSTACK.  Newer gcc versions
+<span class="lineNum">    1123 </span>            :    do this itself.  */
+<span class="lineNum">    1124 </span>            : #if !defined _HAVE_STRING_ARCH_strstr &amp;&amp; !__GNUC_PREREQ (2, 97)
+<span class="lineNum">    1125 </span>            : # define strstr(haystack, needle) \
+<span class="lineNum">    1126 </span>            :   (__extension__ (__builtin_constant_p (needle) &amp;&amp; __string2_1bptr_p (needle) \
+<span class="lineNum">    1127 </span>            :                   ? (((const char *) (needle))[0] == '\0'                     \
+<span class="lineNum">    1128 </span>            :                      ? (char *) (size_t) (haystack)                           \
+<span class="lineNum">    1129 </span>            :                      : (((const char *) (needle))[1] == '\0'                  \
+<span class="lineNum">    1130 </span>            :                         ? strchr (haystack,                                   \
+<span class="lineNum">    1131 </span>            :                                   ((const char *) (needle))[0])               \
+<span class="lineNum">    1132 </span>            :                         : strstr (haystack, needle)))                         \
+<span class="lineNum">    1133 </span>            :                   : strstr (haystack, needle)))
+<span class="lineNum">    1134 </span>            : #endif
+<span class="lineNum">    1135 </span>            : 
+<span class="lineNum">    1136 </span>            : 
+<span class="lineNum">    1137 </span>            : #if !defined _HAVE_STRING_ARCH_strtok_r || defined _FORCE_INLINES
+<span class="lineNum">    1138 </span>            : # ifndef _HAVE_STRING_ARCH_strtok_r
+<span class="lineNum">    1139 </span>            : #  define __strtok_r(s, sep, nextp) \
+<span class="lineNum">    1140 </span>            :   (__extension__ (__builtin_constant_p (sep) &amp;&amp; __string2_1bptr_p (sep)       \
+<span class="lineNum">    1141 </span>            :                   &amp;&amp; ((const char *) (sep))[0] != '\0'                        \
+<span class="lineNum">    1142 </span>            :                   &amp;&amp; ((const char *) (sep))[1] == '\0'                        \
+<span class="lineNum">    1143 </span>            :                   ? __strtok_r_1c (s, ((const char *) (sep))[0], nextp)       \
+<span class="lineNum">    1144 </span>            :                   : __strtok_r (s, sep, nextp)))
+<span class="lineNum">    1145 </span>            : # endif
+<span class="lineNum">    1146 </span>            : 
+<span class="lineNum">    1147 </span>            : __STRING_INLINE char *__strtok_r_1c (char *__s, char __sep, char **__nextp);
+<span class="lineNum">    1148 </span>            : __STRING_INLINE char *
+<span class="lineNum">    1149 </span>            : __strtok_r_1c (char *__s, char __sep, char **__nextp)
+<span class="lineNum">    1150 </span>            : {
+<span class="lineNum">    1151 </span>            :   char *__result;
+<span class="lineNum">    1152 </span>            :   if (__s == NULL)
+<span class="lineNum">    1153 </span>            :     __s = *__nextp;
+<span class="lineNum">    1154 </span>            :   while (*__s == __sep)
+<span class="lineNum">    1155 </span>            :     ++__s;
+<span class="lineNum">    1156 </span>            :   __result = NULL;
+<span class="lineNum">    1157 </span>            :   if (*__s != '\0')
+<span class="lineNum">    1158 </span>            :     {
+<span class="lineNum">    1159 </span>            :       __result = __s++;
+<span class="lineNum">    1160 </span>            :       while (*__s != '\0')
+<span class="lineNum">    1161 </span>            :         if (*__s++ == __sep)
+<span class="lineNum">    1162 </span>            :           {
+<span class="lineNum">    1163 </span>            :             __s[-1] = '\0';
+<span class="lineNum">    1164 </span>            :             break;
+<span class="lineNum">    1165 </span>            :           }
+<span class="lineNum">    1166 </span>            :     }
+<span class="lineNum">    1167 </span>            :   *__nextp = __s;
+<span class="lineNum">    1168 </span>            :   return __result;
+<span class="lineNum">    1169 </span>            : }
+<span class="lineNum">    1170 </span>            : # ifdef __USE_POSIX
+<span class="lineNum">    1171 </span>            : #  define strtok_r(s, sep, nextp) __strtok_r (s, sep, nextp)
+<span class="lineNum">    1172 </span>            : # endif
+<span class="lineNum">    1173 </span>            : #endif
+<span class="lineNum">    1174 </span>            : 
+<span class="lineNum">    1175 </span>            : 
+<span class="lineNum">    1176 </span>            : #if !defined _HAVE_STRING_ARCH_strsep || defined _FORCE_INLINES
+<span class="lineNum">    1177 </span>            : # ifndef _HAVE_STRING_ARCH_strsep
+<span class="lineNum">    1178 </span>            : 
+<span class="lineNum">    1179 </span>            : extern char *__strsep_g (char **__stringp, const char *__delim);
+<span class="lineNum">    1180 </span>            : #  define __strsep(s, reject) \
+<span class="lineNum">    1181 </span>            :   __extension__                                                               \
+<span class="lineNum">    1182 </span>            :   ({ char __r0, __r1, __r2;                                                   \
+<span class="lineNum">    1183 </span>            :      (__builtin_constant_p (reject) &amp;&amp; __string2_1bptr_p (reject)             \
+<span class="lineNum">    1184 </span>            :       &amp;&amp; (__r0 = ((const char *) (reject))[0],                                \
+<span class="lineNum">    1185 </span>            :           ((const char *) (reject))[0] != '\0')                               \
+<span class="lineNum">    1186 </span>            :       ? ((__r1 = ((const char *) (reject))[1],                                \
+<span class="lineNum">    1187 </span>            :          ((const char *) (reject))[1] == '\0')                                \
+<span class="lineNum">    1188 </span>            :          ? __strsep_1c (s, __r0)                                              \
+<span class="lineNum">    1189 </span>            :          : ((__r2 = ((const char *) (reject))[2], __r2 == '\0')               \
+<span class="lineNum">    1190 </span>            :             ? __strsep_2c (s, __r0, __r1)                                     \
+<span class="lineNum">    1191 </span>            :             : (((const char *) (reject))[3] == '\0'                           \
+<span class="lineNum">    1192 </span>            :                ? __strsep_3c (s, __r0, __r1, __r2)                            \
+<span class="lineNum">    1193 </span>            :                : __strsep_g (s, reject))))                                    \
+<span class="lineNum">    1194 </span>            :       : __strsep_g (s, reject)); })
+<span class="lineNum">    1195 </span>            : # endif
+<span class="lineNum">    1196 </span>            : 
+<span class="lineNum">    1197 </span>            : __STRING_INLINE char *__strsep_1c (char **__s, char __reject);
+<span class="lineNum">    1198 </span>            : __STRING_INLINE char *
+<span class="lineNum">    1199 </span>            : __strsep_1c (char **__s, char __reject)
+<span class="lineNum">    1200 </span>            : {
+<span class="lineNum">    1201 </span>            :   char *__retval = *__s;
+<span class="lineNum">    1202 </span>            :   if (__retval != NULL &amp;&amp; (*__s = strchr (__retval, __reject)) != NULL)
+<span class="lineNum">    1203 </span>            :     *(*__s)++ = '\0';
+<span class="lineNum">    1204 </span>            :   return __retval;
+<span class="lineNum">    1205 </span>            : }
+<span class="lineNum">    1206 </span>            : 
+<span class="lineNum">    1207 </span>            : __STRING_INLINE char *__strsep_2c (char **__s, char __reject1, char __reject2);
+<span class="lineNum">    1208 </span>            : __STRING_INLINE char *
+<span class="lineNum">    1209 </span>            : __strsep_2c (char **__s, char __reject1, char __reject2)
+<span class="lineNum">    1210 </span>            : {
+<span class="lineNum">    1211 </span>            :   char *__retval = *__s;
+<span class="lineNum">    1212 </span>            :   if (__retval != NULL)
+<span class="lineNum">    1213 </span>            :     {
+<span class="lineNum">    1214 </span>            :       char *__cp = __retval;
+<span class="lineNum">    1215 </span>            :       while (1)
+<span class="lineNum">    1216 </span>            :         {
+<span class="lineNum">    1217 </span>            :           if (*__cp == '\0')
+<span class="lineNum">    1218 </span>            :             {
+<span class="lineNum">    1219 </span>            :               __cp = NULL;
+<span class="lineNum">    1220 </span>            :           break;
+<span class="lineNum">    1221 </span>            :             }
+<span class="lineNum">    1222 </span>            :           if (*__cp == __reject1 || *__cp == __reject2)
+<span class="lineNum">    1223 </span>            :             {
+<span class="lineNum">    1224 </span>            :               *__cp++ = '\0';
+<span class="lineNum">    1225 </span>            :               break;
+<span class="lineNum">    1226 </span>            :             }
+<span class="lineNum">    1227 </span>            :           ++__cp;
+<span class="lineNum">    1228 </span>            :         }
+<span class="lineNum">    1229 </span>            :       *__s = __cp;
+<span class="lineNum">    1230 </span>            :     }
+<span class="lineNum">    1231 </span>            :   return __retval;
+<span class="lineNum">    1232 </span>            : }
+<span class="lineNum">    1233 </span>            : 
+<span class="lineNum">    1234 </span>            : __STRING_INLINE char *__strsep_3c (char **__s, char __reject1, char __reject2,
+<span class="lineNum">    1235 </span>            :                                    char __reject3);
+<span class="lineNum">    1236 </span>            : __STRING_INLINE char *
+<span class="lineNum">    1237 </span>            : __strsep_3c (char **__s, char __reject1, char __reject2, char __reject3)
+<span class="lineNum">    1238 </span>            : {
+<span class="lineNum">    1239 </span>            :   char *__retval = *__s;
+<span class="lineNum">    1240 </span>            :   if (__retval != NULL)
+<span class="lineNum">    1241 </span>            :     {
+<span class="lineNum">    1242 </span>            :       char *__cp = __retval;
+<span class="lineNum">    1243 </span>            :       while (1)
+<span class="lineNum">    1244 </span>            :         {
+<span class="lineNum">    1245 </span>            :           if (*__cp == '\0')
+<span class="lineNum">    1246 </span>            :             {
+<span class="lineNum">    1247 </span>            :               __cp = NULL;
+<span class="lineNum">    1248 </span>            :           break;
+<span class="lineNum">    1249 </span>            :             }
+<span class="lineNum">    1250 </span>            :           if (*__cp == __reject1 || *__cp == __reject2 || *__cp == __reject3)
+<span class="lineNum">    1251 </span>            :             {
+<span class="lineNum">    1252 </span>            :               *__cp++ = '\0';
+<span class="lineNum">    1253 </span>            :               break;
+<span class="lineNum">    1254 </span>            :             }
+<span class="lineNum">    1255 </span>            :           ++__cp;
+<span class="lineNum">    1256 </span>            :         }
+<span class="lineNum">    1257 </span>            :       *__s = __cp;
+<span class="lineNum">    1258 </span>            :     }
+<span class="lineNum">    1259 </span>            :   return __retval;
+<span class="lineNum">    1260 </span>            : }
+<span class="lineNum">    1261 </span>            : # ifdef __USE_MISC
+<span class="lineNum">    1262 </span>            : #  define strsep(s, reject) __strsep (s, reject)
+<span class="lineNum">    1263 </span>            : # endif
+<span class="lineNum">    1264 </span>            : #endif
+<span class="lineNum">    1265 </span>            : 
+<span class="lineNum">    1266 </span>            : /* We need the memory allocation functions for inline strdup().
+<span class="lineNum">    1267 </span>            :    Referring to stdlib.h (even minimally) is not allowed
+<span class="lineNum">    1268 </span>            :    in any of the tight standards compliant modes.  */
+<span class="lineNum">    1269 </span>            : #ifdef __USE_MISC
+<span class="lineNum">    1270 </span>            : 
+<span class="lineNum">    1271 </span>            : # if !defined _HAVE_STRING_ARCH_strdup || !defined _HAVE_STRING_ARCH_strndup
+<span class="lineNum">    1272 </span>            : #  define __need_malloc_and_calloc
+<span class="lineNum">    1273 </span>            : #  include &lt;stdlib.h&gt;
+<span class="lineNum">    1274 </span>            : # endif
+<span class="lineNum">    1275 </span>            : 
+<span class="lineNum">    1276 </span>            : # ifndef _HAVE_STRING_ARCH_strdup
+<span class="lineNum">    1277 </span>            : 
+<span class="lineNum">    1278 </span>            : extern char *__strdup (const char *__string) __THROW __attribute_malloc__;
+<span class="lineNum">    1279 </span>            : #  define __strdup(s) \
+<span class="lineNum">    1280 </span>            :   (__extension__ (__builtin_constant_p (s) &amp;&amp; __string2_1bptr_p (s)           \
+<span class="lineNum">    1281 </span>            :                   ? (((const char *) (s))[0] == '\0'                          \
+<span class="lineNum">    1282 </span>            :                      ? (char *) calloc ((size_t) 1, (size_t) 1)               \
+<span class="lineNum">    1283 </span>            :                      : ({ size_t __len = strlen (s) + 1;                      \
+<span class="lineNum">    1284 </span>            :                           char *__retval = (char *) malloc (__len);           \
+<span class="lineNum">    1285 </span>            :                           if (__retval != NULL)                               \
+<span class="lineNum">    1286 </span>            :                             __retval = (char *) memcpy (__retval, s, __len);  \
+<span class="lineNum">    1287 </span>            :                           __retval; }))                                       \
+<span class="lineNum">    1288 </span>            :                   : __strdup (s)))
+<span class="lineNum">    1289 </span>            : 
+<span class="lineNum">    1290 </span>            : #  if defined __USE_XOPEN_EXTENDED || defined __USE_XOPEN2K8
+<span class="lineNum">    1291 </span>            : #   define strdup(s) __strdup (s)
+<span class="lineNum">    1292 </span>            : #  endif
+<span class="lineNum">    1293 </span>            : # endif
+<span class="lineNum">    1294 </span>            : 
+<span class="lineNum">    1295 </span>            : # ifndef _HAVE_STRING_ARCH_strndup
+<span class="lineNum">    1296 </span>            : 
+<span class="lineNum">    1297 </span>            : extern char *__strndup (const char *__string, size_t __n)
+<span class="lineNum">    1298 </span>            :      __THROW __attribute_malloc__;
+<span class="lineNum">    1299 </span>            : #  define __strndup(s, n) \
+<span class="lineNum">    1300 </span>            :   (__extension__ (__builtin_constant_p (s) &amp;&amp; __string2_1bptr_p (s)           \
+<span class="lineNum">    1301 </span>            :                   ? (((const char *) (s))[0] == '\0'                          \
+<span class="lineNum">    1302 </span>            :                      ? (char *) calloc ((size_t) 1, (size_t) 1)               \
+<span class="lineNum">    1303 </span>            :                      : ({ size_t __len = strlen (s) + 1;                      \
+<span class="lineNum">    1304 </span>            :                           size_t __n = (n);                                   \
+<span class="lineNum">    1305 </span>            :                           char *__retval;                                     \
+<span class="lineNum">    1306 </span>            :                           if (__n &lt; __len)                                 \
+<span class="lineNum">    1307 </span>            :                             __len = __n + 1;                                  \
+<span class="lineNum">    1308 </span>            :                           __retval = (char *) malloc (__len);                 \
+<span class="lineNum">    1309 </span>            :                           if (__retval != NULL)                               \
+<span class="lineNum">    1310 </span>            :                             {                                                 \
+<span class="lineNum">    1311 </span>            :                               __retval[__len - 1] = '\0';                     \
+<span class="lineNum">    1312 </span>            :                               __retval = (char *) memcpy (__retval, s,        \
+<span class="lineNum">    1313 </span>            :                                                           __len - 1);         \
+<span class="lineNum">    1314 </span>            :                             }                                                 \
+<span class="lineNum">    1315 </span>            :                           __retval; }))                                       \
+<span class="lineNum">    1316 </span>            :                   : __strndup (s, n)))
+<span class="lineNum">    1317 </span>            : 
+<span class="lineNum">    1318 </span>            : #  ifdef __USE_XOPEN2K8
+<span class="lineNum">    1319 </span>            : #   define strndup(s, n) __strndup (s, n)
+<span class="lineNum">    1320 </span>            : #  endif
+<span class="lineNum">    1321 </span>            : # endif
+<span class="lineNum">    1322 </span>            : 
+<span class="lineNum">    1323 </span>            : #endif /* Use misc. or use GNU.  */
+<span class="lineNum">    1324 </span>            : 
+<span class="lineNum">    1325 </span>            : #ifndef _FORCE_INLINES
+<span class="lineNum">    1326 </span>            : # undef __STRING_INLINE
+<span class="lineNum">    1327 </span>            : #endif
+<span class="lineNum">    1328 </span>            : 
+<span class="lineNum">    1329 </span>            : #endif /* No string inlines.  */
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13-14-ga5dd952</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>
