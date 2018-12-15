@@ -8,5 +8,6 @@ In this paper, we present a combination of a Neural Network architecture and Fuz
 
 
 ### More information can be found in the final paper/presentation:
-Paper: @https://github.com/idomic/ReliableProj/blob/master/E6121_Yuval_Ido.pdf
-Presentation: @https://github.com/idomic/ReliableProj/blob/master/Reliable%20-%20Final%20Presentation.pdf
+Paper @ https://github.com/idomic/ReliableProj/blob/master/E6121_Yuval_Ido.pdf
+
+Presentation @ https://github.com/idomic/ReliableProj/blob/master/Reliable%20-%20Final%20Presentation.pdf
